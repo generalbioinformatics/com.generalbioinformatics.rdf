@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<project name="com.generalbioinformatics.rdf.gui" default="jar" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<import file="../build-common.xml" />
+
+	<property name="jar.name" value="${ant.project.name}.jar"/>
+	
+	<path id="project.class.path">
+	    <fileset dir="ivycache">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="test.class.path"/>
+
+	<target name="compile" depends="prepare,prepare-common,retrieve">
+		<echo>Compiling: ${jar.name}</echo>
+		<javac srcdir="src:src-generated"
+			   includes="**"
+			   destdir="build"
+			   debug="${debug.mode}">
+		  <classpath refid="project.class.path"/>
+		</javac>
+		<!-- workaround: make an empty directory so that the next step doesn't fail -->
+		<mkdir dir="resources"/>
+		<copy todir="build">
+			<fileset dir="resources">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	</target>
+
+</project>
