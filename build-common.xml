@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<project name="com.generalbioinformatics-common" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property name="ant.build.javac.target" value="1.6"/>
+	<property name="ant.build.javac.source" value="1.6"/>
+
+	<property name="debug.mode" value="true"/>
+	<property name="bundle.dest" value=".."/>
+
+	<target name="prepare-common">
+		<mkdir dir="build"/>
+		<tstamp>
+			<format property="builddate" pattern="yyyyMMdd"/>
+		</tstamp>
+		<exec executable="git" outputproperty="githash" failifexecutionfails="false">
+			<arg line="log -1 --format='%H'"/>
+		</exec>
+	</target>
+	
+	<target name="prepare">
+	</target>
+	
+	<target name="clean">
+		<delete dir="build"/>
+	</target>
+
+	<target name="dist-clean" depends="clean">
+		<delete file="${bundle.dest}/${jar.name}"/>
+	</target>
+
+	<target name="retrieve">
+		<!-- the "sync" option will cause deleting obsolete dependencies from the target directory -->
+		<ivy:retrieve pattern="ivycache/[artifact]-[revision].[ext]" sync="true"/>
+	</target>
+	
+	<target name="compile" depends="prepare,prepare-common,retrieve">
+		<echo>Compiling: ${jar.name}</echo>
+		<javac srcdir="src"
+			   includes="**"
+			   destdir="build"
+			   source="1.6"
+			   debug="${debug.mode}">
+		  <classpath refid="project.class.path"/>
+		</javac>
+		<!-- workaround: make an empty directory so that the next step doesn't fail -->
+		<mkdir dir="resources"/>
+		<copy todir="build">
+			<fileset dir="resources">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile"> 
+		<echo>Creating JAR: ${jar.name}</echo>		
+		<jar jarfile="${bundle.dest}/${jar.name}" manifest="META-INF/MANIFEST.MF">
+			<fileset dir="build">
+				<include name="**/*.class"/>
+			</fileset>
+			<manifest>
+					<attribute name="Built-Date" value="${builddate}"/>
+					<attribute name="Built-By" value="${user.name}"/>
+					<attribute name="Git-Hash" value="${githash}"/>		
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="test">
+		<javac srcdir="test" debug="${debug.mode}"
+					includes="**"
+					source="1.6"
+					destdir="build">
+			<classpath>
+				<path refid="test.class.path"/>
+				<path refid="project.class.path"/>
+			</classpath>
+		</javac>
+		<junit printsummary="on" haltonfailure="true" fork="true" dir=".">
+			<formatter type="brief" usefile="false"/>
+			<classpath>
+				<pathelement path="build"/>
+				<path refid="project.class.path"/>
+				<path refid="test.class.path"/>
+			</classpath>
+			<batchtest>
+				<fileset dir="test">
+					<include name="**/*Test*.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="publish" depends="clean,jar" description="Publish this build into repository">
+		<echo>Checking if git repository is clean
+If exec returns 1, you have to git commit first</echo>
+		<exec executable="git" outputproperty="diff" failifexecutionfails="false" failonerror="true">
+			<!-- this will cause task to fail if there are dirty commits -->
+			<!-- however, if the git executable can't be run, this check is skipped -->
+			<arg line="diff --exit-code"/>
+		</exec>
+		<echo message="Repository OK"/>
+		<ivy:resolve/>
+		<ivy:publish pubrevision="1.0" overwrite="true" forcedeliver="true" status="release" resolver="libraries" >
+			<artifacts pattern="../[artifact].[ext]"/>
+		</ivy:publish>
+	</target>
+</project>
