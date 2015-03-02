@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<owl:Class rdf:about="http://purl.obolibrary.org/obo/WBPhenotype_0000000">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">chromosome instability</rdfs:label>
+    </owl:Class>
+    <owl:Axiom>
+        <owl:annotatedSource rdf:resource="http://purl.obolibrary.org/obo/WBPhenotype_0000000"/>
+    </owl:Axiom>
+     <owl:Class rdf:about="http://purl.obolibrary.org/obo/WBPhenotype_0000001">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">body posture variant</rdfs:label>
+    </owl:Class>
+</rdf:RDF>

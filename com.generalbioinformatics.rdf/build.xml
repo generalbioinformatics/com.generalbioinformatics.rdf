@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<project name="com.generalbioinformatics.rdf" default="jar" basedir=".">
+
+	<import file="../build-common.xml" />
+
+	<property name="jar.name" value="${ant.project.name}.jar"/>
+	
+	<path id="project.class.path">
+	    <fileset dir="lib">
+			<include name="*.jar"/>
+		</fileset>
+	    <fileset dir="ivycache">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="test.class.path"/>
+
+	<target name="jar" depends="compile"> 
+		<echo>Creating JAR: ${jar.name}</echo>
+		<!-- include the dependant library as the contents of this bundle -->
+		<unjar src="lib/virtjdbc3.jar" dest="build"/>
+		
+		<!-- In eclipse, you need create a Bundle-ClassPath entry in MANIFEST.MF for each non-OSGI jar.
+		This causes trouble if we are running outside eclipse, because the jars usually end up in a different location.
+		The trick is to remove the bundle-classpath used by eclipse, we embed these jars instead -->
+		<copy file="META-INF/MANIFEST.MF" toDir="build/META-INF"/>
+		
+		<replaceregexp file="build/META-INF/MANIFEST.MF" match="^Bundle-ClassPath:" replace="Ignore-this:" flags="m"/>
+		<!-- Finally, create the jar file. Include all resources, build results, and manifest. -->
+		
+		<jar jarfile="${bundle.dest}/${jar.name}" 
+			basedir="build" 
+			manifest="build/META-INF/MANIFEST.MF">
+		</jar>
+		
+	</target>
+
+</project>

@@ -1,0 +1,6 @@
+<http://purl.obolibrary.org/obo/WBPhenotype_0000000> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://purl.obolibrary.org/obo/WBPhenotype_0000000> <http://www.w3.org/2000/01/rdf-schema#label> "chromosome instability"^^<http://www.w3.org/2001/XMLSchema#string> .
+_:genid1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Axiom> .
+_:genid1 <http://www.w3.org/2002/07/owl#annotatedSource> <http://purl.obolibrary.org/obo/WBPhenotype_0000000> .
+<http://purl.obolibrary.org/obo/WBPhenotype_0000001> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Class> .
+<http://purl.obolibrary.org/obo/WBPhenotype_0000001> <http://www.w3.org/2000/01/rdf-schema#label> "body posture variant"^^<http://www.w3.org/2001/XMLSchema#string> .

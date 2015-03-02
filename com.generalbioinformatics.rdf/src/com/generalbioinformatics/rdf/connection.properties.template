@@ -1,0 +1,5 @@
+host=localhost
+port=1111
+username=dba
+password=******
+vload.directory=/local/tmp/virtuoso-tmp
