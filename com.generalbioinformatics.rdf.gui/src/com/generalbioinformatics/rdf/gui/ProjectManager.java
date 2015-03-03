@@ -165,7 +165,7 @@ public class ProjectManager
 	public final ProjectEditAction editAction = new ProjectEditAction();
 	public final ProjectLoadAction loadAction = new ProjectLoadAction();
 	public final ProjectSaveAction saveAction = new ProjectSaveAction();
-	public final ProjectDownloadAction downloadAction = new ProjectDownloadAction();
+//	public final ProjectDownloadAction downloadAction = new ProjectDownloadAction();
 
 	private class ProjectEditAction extends AbstractAction
 	{

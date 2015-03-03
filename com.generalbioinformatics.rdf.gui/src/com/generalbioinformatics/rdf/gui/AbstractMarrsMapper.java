@@ -25,6 +25,7 @@ import org.pathvisio.gui.dialogs.OkCancelDialog;
 
 import com.generalbioinformatics.rdf.NS;
 import com.generalbioinformatics.rdf.NamespaceMap;
+import com.generalbioinformatics.rdf.TripleStore;
 
 /**
  * Contains functionality common between cytoscape 2 and cytoscape 3 versions of the
@@ -138,7 +139,10 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	@Override
 	public final int addAttributes(String query) throws StreamException
 	{			
-		QuerySwingWorker worker = new QuerySwingWorker(conMgr.getConnection(), query)
+		TripleStore con = conMgr.getConnection();
+		if (con == null) return -1; // already showed error dialog at this point.
+		
+		QuerySwingWorker worker = new QuerySwingWorker(con, query)
 		{
 			Set<NodeType> nodesAdded = new HashSet<NodeType>();
 			
@@ -197,7 +201,10 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	@Override
 	public final int createNetwork(String query, final MarrsQuery mq) throws StreamException 
 	{
-		QuerySwingWorker worker = new QuerySwingWorker(conMgr.getConnection(), query)
+		TripleStore con = conMgr.getConnection();
+		if (con == null) return -1; // already showed error dialog at this point.
+		
+		QuerySwingWorker worker = new QuerySwingWorker(con, query)
 		{
 			Set<EdgeType> edgesPostponed = new HashSet<EdgeType>();
 			Set<NodeType> nodesAdded = new HashSet<NodeType>();
@@ -237,14 +244,13 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			}
 		};
 			
-		worker.execute();
-		
-		// dialog will be visible until swingWorker is done.
-		IndeterminateProgressDialog.createAndShow(getFrame(), "Executing query", worker);	
 
 		
 		int count;
 		try {
+			worker.execute();			
+			// dialog will be visible until swingWorker is done.
+			IndeterminateProgressDialog.createAndShow(getFrame(), "Executing query", worker);	
 			count = worker.get();
 			return count;
 		} 

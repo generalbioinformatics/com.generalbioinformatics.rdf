@@ -89,7 +89,8 @@ public class TripleStoreManager
 		//TODO: parent component
 		ConnectionWorker worker = new ConnectionWorker(null, driver);
 		worker.execute();
-				
+		//TODO: any exceptions during connection are shown in a dialog, and con returns null. Maybe better to rethrow the exception here? 
+		
 		// dialog will be visible until swingWorker is done.
 		//TODO: parent component
 		IndeterminateProgressDialog.createAndShow((JFrame)null, "Connecting to triple store", worker);	
