@@ -7,3 +7,4 @@ ivycache/
 .settings/
 build.properties
 /*.jar
+/ivy.xml

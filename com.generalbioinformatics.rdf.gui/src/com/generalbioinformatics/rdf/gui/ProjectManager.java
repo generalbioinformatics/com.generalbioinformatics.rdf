@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -26,6 +27,7 @@ import nl.helixsoft.gui.DownloadUtils;
 import nl.helixsoft.gui.preferences.PreferenceManager;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.FileUtils;
+import nl.helixsoft.util.StringUtils;
 
 import org.apache.commons.codec.binary.Base64;
 import org.jdom.JDOMException;
@@ -40,8 +42,20 @@ public class ProjectManager
 	private final TripleStoreManager conMgr;
 	private final MarrsMapper mapper;
 	private final Frame frame;
-	private final List<File> recentFiles;
+	private final List<RecentItem> recentItems;
 	public final List<AbstractAction> recentActions;
+	
+	private static class RecentItem
+	{
+		public RecentItem(File aFile, String aTitle) 
+		{
+			this.title = aTitle;
+			this.file = aFile;
+		}
+		
+		final String title;
+		final File file;
+	}
 	
 	// project may be null
 	private MarrsProject project = null;
@@ -66,7 +80,7 @@ public class ProjectManager
 		public void actionPerformed(ActionEvent arg0) 
 		{
 			try {
-				File f = recentFiles.get(no);
+				File f = recentItems.get(no).file;
 				loadProject (f);
 				prefs.setFile(MarrsPreference.MARRS_PROJECT_FILE, f);
 				prefs.store();
@@ -92,21 +106,19 @@ public class ProjectManager
 		project = null;
 		updateActions();
 		
-		recentFiles = new ArrayList<File>();
+		recentItems = new ArrayList<RecentItem>();
 		recentActions = new ArrayList<AbstractAction>();
 		
 		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
 		{
 			File f = prefs.getFile(MarrsPreference.RECENT_FILE_ARRAY[i]);
-			recentFiles.add (f);
+			String title = prefs.get(MarrsPreference.RECENT_FILE_TITLE_ARRAY[i]);
+			RecentItem item = new RecentItem(f, title);
+			recentItems.add (item);
 			AbstractAction action = new RecentFileAction(i);
 			recentActions.add (action);
 		}
 		
-		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
-		{
-		}
-
 		refreshRecentFilesMenu();		
 	}
 
@@ -115,9 +127,14 @@ public class ProjectManager
 		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
 		{
 			AbstractAction act = recentActions.get(i);
-			File f = (i >= recentFiles.size()) ? null : recentFiles.get(i);
-			act.setEnabled(f != null);
-			act.putValue(Action.NAME, i + (f == null ? "" : (" - " + f.getName())));
+			RecentItem item = (i >= recentItems.size()) ? null : recentItems.get(i);
+			act.setEnabled(item.file != null);
+			String menuTitle = i + (item.file == null ? "" : (" - " + item.file.getName()));
+			
+			if (!StringUtils.emptyOrNull(item.title))
+				menuTitle += " - " + item.title;
+			
+			act.putValue(Action.NAME, menuTitle);
 		}
 	}
 	
@@ -139,19 +156,26 @@ public class ProjectManager
 		InputStream is = new FileInputStream(projectFile);
 		loadProject (is);
 		
-		// remove all and reinsert at the top
-		while (recentFiles.contains(projectFile))
-			recentFiles.remove(projectFile);
-		
-		recentFiles.add(0, projectFile);
-		if (recentFiles.size() > MarrsPreference.RECENT_FILE_NUM) recentFiles.remove(recentFiles.size()-1);
+		// remove all occurrences of this file and reinsert at the top
+		Iterator<RecentItem> it = recentItems.iterator();
+		while (it.hasNext())
+		{
+			RecentItem i = it.next();
+			if (i.file == projectFile)
+			{
+				it.remove();
+			}
+		}
+				
+		recentItems.add(0, new RecentItem (projectFile, getProject().getTitle()));
+		if (recentItems.size() > MarrsPreference.RECENT_FILE_NUM) recentItems.remove(recentItems.size()-1);
 		
 		refreshRecentFilesMenu();
 		
 		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
 		{
-			// TODO: missing files will be stored as "null" string.
-			prefs.setFile(MarrsPreference.RECENT_FILE_ARRAY[i], (i >= recentFiles.size()) ? null : recentFiles.get(i));
+			prefs.setFile(MarrsPreference.RECENT_FILE_ARRAY[i], (i >= recentItems.size()) ? null : recentItems.get(i).file);
+			prefs.set(MarrsPreference.RECENT_FILE_TITLE_ARRAY[i], (i >= recentItems.size()) ? null : recentItems.get(i).title);
 		}		
 	}
 	

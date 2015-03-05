@@ -33,10 +33,15 @@ public enum MarrsPreference implements Preference
 	
 	/** Most recently used project location */
 	MARRS_RECENT_1(""),
+	MARRS_RECENT_1_TITLE(""),
 	MARRS_RECENT_2(""),
+	MARRS_RECENT_2_TITLE(""),
 	MARRS_RECENT_3(""),
+	MARRS_RECENT_3_TITLE(""),
 	MARRS_RECENT_4(""),
+	MARRS_RECENT_4_TITLE(""),
 	MARRS_RECENT_5(""), 
+	MARRS_RECENT_5_TITLE(""), 
 	
 	/** Classpath location where the vizmap properties can be found */
 	@Deprecated
@@ -45,6 +50,7 @@ public enum MarrsPreference implements Preference
 
 	public static int RECENT_FILE_NUM = 5;
 	public static Preference[] RECENT_FILE_ARRAY = new Preference[] { MARRS_RECENT_1, MARRS_RECENT_2, MARRS_RECENT_3, MARRS_RECENT_4, MARRS_RECENT_5 };
+	public static Preference[] RECENT_FILE_TITLE_ARRAY = new Preference[] { MARRS_RECENT_1_TITLE, MARRS_RECENT_2_TITLE, MARRS_RECENT_3_TITLE, MARRS_RECENT_4_TITLE, MARRS_RECENT_5_TITLE };
 	
 	private MarrsPreference(String def)
 	{
