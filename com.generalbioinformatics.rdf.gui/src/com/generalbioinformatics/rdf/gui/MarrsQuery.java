@@ -21,6 +21,7 @@ public class MarrsQuery implements RowWithProperties<MarrsColumn>
 	private String askBefore = null;
 	private Map<String, String> contextTypes = new HashMap<String, String>();
 	private Map<String, String> postProcess = new HashMap<String, String>();
+	
 	private boolean isContextQuery = false;
 	
 	public enum QueryType { 

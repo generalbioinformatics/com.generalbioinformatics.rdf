@@ -46,11 +46,20 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 	public static final String PUBLISHVERSION_REPLACEMENT_TOKEN = "@PUBLISHVERSION@";
 	
 	/* Current schema version for project files. Encountering a newer version may mean that plugin is out-of-date. */
-	public final static double CURRENT_SCHEMAVERSION = 0.3;
+	public final static double CURRENT_SCHEMAVERSION = 0.4;
 	
 	private MapTableModel<String, String> parameters = new MapTableModel<String, String>();
 	private boolean dirty;
 	private String pubVersion;
+
+	public static class NodeAttribute
+	{
+		String key;
+		String value;
+		Map <String, String> vizprops = new HashMap<String, String>();
+	}
+	
+	private List<NodeAttribute> nodeAttributes = new ArrayList<NodeAttribute>();
 	
 	MarrsProject()
 	{
@@ -312,6 +321,28 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			String val = eParam.getAttributeValue("val");
 			project.setQueryParameter(key, val);
 		}
+		
+		for (Object o : root.getChildren("NodeAttribute"))
+		{
+			NodeAttribute attr = new NodeAttribute();
+			
+			Element eNodeAttribute = (Element)o;
+			attr.key = eNodeAttribute.getAttributeValue("key");
+			attr.value = eNodeAttribute.getAttributeValue("value");
+			
+			for (Object vp : eNodeAttribute.getChildren("Vizmap"))
+			{
+				Element eVizmap = (Element)vp;
+				
+				String prop = eVizmap.getAttributeValue("prop");
+				String propValue = eVizmap.getAttributeValue("value");
+				
+				attr.vizprops.put(prop, propValue);
+			}
+			
+			project.nodeAttributes.add (attr);
+		}
+		
 		project.dirty = false;
 
 		if (warnings.size() > 0)
@@ -323,7 +354,6 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 		return project;
 
 	}
-
 
 	private static QueryType findQueryType(String typeName) 
 	{
@@ -386,6 +416,22 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 				paramElt.setAttribute("key", param.getKey());
 				paramElt.setAttribute("val", param.getValue());
 				root.addContent(paramElt);
+			}
+			
+			for (NodeAttribute attr : nodeAttributes)
+			{
+				Element nodeAttr = new Element ("NodeAttribute");
+				nodeAttr.setAttribute("key", attr.key);
+				nodeAttr.setAttribute("value", attr.value);
+
+				for (Map.Entry<String, String> e : attr.vizprops.entrySet())
+				{
+					Element vizprop = new Element ("Vizmap");
+					vizprop.setAttribute("prop", e.getKey());
+					vizprop.setAttribute("value", e.getValue());
+					nodeAttr.addContent(vizprop);
+				}
+				root.addContent (nodeAttr);
 			}
 			
 			Document doc = new Document(root);
