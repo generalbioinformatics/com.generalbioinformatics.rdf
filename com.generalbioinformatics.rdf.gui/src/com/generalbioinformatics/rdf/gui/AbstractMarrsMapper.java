@@ -1,7 +1,7 @@
 /**
-* Copyright (c) 2015 General Bioinformatics Limited
-* Distributed under the GNU GPL v2. For full terms see the file LICENSE.
-*/
+ * Copyright (c) 2015 General Bioinformatics Limited
+ * Distributed under the GNU GPL v2. For full terms see the file LICENSE.
+ */
 package com.generalbioinformatics.rdf.gui;
 
 import java.util.HashSet;
@@ -38,12 +38,12 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 {
 	protected final TripleStoreManager conMgr;
 	private NamespaceMap namespaces = new NS();
-	
+
 	protected AbstractMarrsMapper (TripleStoreManager conMgr)
 	{
 		this.conMgr = conMgr;
 	}
-	
+
 	@Override
 	public final int popupResults(String query) throws StreamException 
 	{
@@ -73,7 +73,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	 *  may or may not lead to an exception.
 	 */
 	protected abstract void setNodeAttribute(NodeType node, String key, Object val);
-	
+
 	/**
 	 * Set a edge attribute, i.e. add attribute map associated with a particular edge.
 	 * The value can be of any type, but it's an error to mix types for a given key. 
@@ -83,7 +83,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	 *  may or may not lead to an exception.
 	 */
 	protected abstract void setEdgeAttribute(EdgeType edge, String key, Object val);
-	
+
 	/**
 	 * Helper method for the BACKBONE query type.
 	 */
@@ -97,7 +97,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			{
 				String val = postProcess ("" + r.get(key), key, mq);
 				setNodeAttribute (nSrc, key.substring("src_".length()), val);
-				
+
 			}
 			else if (key.startsWith("dest_"))
 			{
@@ -131,7 +131,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	protected abstract void flushView();
 	protected abstract void finalizeNetworkAddition(Set<NodeType> nodesAdded, Set<EdgeType> edgesPostPoned);
 	protected abstract void copyNodeCoordinates();
-	
+
 	protected abstract NodeType createNodeIfNotExists(String nodeId, Set<NodeType> nodesAdded);
 	protected abstract EdgeType createEdgeIfNotExists(NodeType nSrc, NodeType nDest, String interaction, Set<EdgeType> edgesPostponed);
 	protected abstract JFrame getFrame();
@@ -141,29 +141,38 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	{			
 		TripleStore con = conMgr.getConnection();
 		if (con == null) return -1; // already showed error dialog at this point.
-		
+
 		QuerySwingWorker worker = new QuerySwingWorker(con, query)
 		{
 			Set<NodeType> nodesAdded = new HashSet<NodeType>();
-			
+
 			@Override
 			protected void process(List<Record> records)
 			{
 				for (Record r : records)
 				{
-					String src = "" + r.get("src");					
-					NodeType nSrc = createNodeIfNotExists(src, nodesAdded);
-					
-					for (int i = 0; i < r.getMetaData().getNumCols(); ++i)
+					try
 					{
-						String key = r.getMetaData().getColumnName(i);
-						if ("src".equals(key)) continue;
-						
-						setNodeAttribute(nSrc, key, r.get(i));
-					}			
+						String src = "" + r.get("src");					
+						NodeType nSrc = createNodeIfNotExists(src, nodesAdded);
+
+						for (int i = 0; i < r.getMetaData().getNumCols(); ++i)
+						{
+							String key = r.getMetaData().getColumnName(i);
+							if ("src".equals(key)) continue;
+
+							setNodeAttribute(nSrc, key, r.get(i));
+						}
+					}
+
+					catch (IllegalArgumentException ex)
+					{
+						JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
+						this.cancel(true);
+					}
 				}
 			}
-			
+
 			@Override
 			protected void done()
 			{
@@ -172,12 +181,12 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 				flushView();
 			}
 		};
-		
+
 		worker.execute();
-		
+
 		// dialog will be visible until swingWorker is done.
 		IndeterminateProgressDialog.createAndShow(getFrame(), "Executing query", worker);	
-		
+
 		int count = 0;
 
 		try {
@@ -203,38 +212,45 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	{
 		TripleStore con = conMgr.getConnection();
 		if (con == null) return -1; // already showed error dialog at this point.
-		
+
 		QuerySwingWorker worker = new QuerySwingWorker(con, query)
 		{
 			Set<EdgeType> edgesPostponed = new HashSet<EdgeType>();
 			Set<NodeType> nodesAdded = new HashSet<NodeType>();
-			
+
 			@Override
 			protected void process(List<Record> records)
 			{
-				for (Record r : records)
-				{
-					String src = "" + r.get("src");
-					String dest = "" + r.get("dest");
-
-					NodeType nSrc = createNodeIfNotExists(src, nodesAdded);
-					NodeType nDest = createNodeIfNotExists(dest, nodesAdded);
-					
-					String interaction = "pp";
-					if (r.getMetaData().hasColumnName("interaction"))
+				try {					
+					for (Record r : records)
 					{
-						interaction = "" + r.get("interaction"); 
+						String src = "" + r.get("src");
+						String dest = "" + r.get("dest");
+
+						NodeType nSrc = createNodeIfNotExists(src, nodesAdded);
+						NodeType nDest = createNodeIfNotExists(dest, nodesAdded);
+
+						String interaction = "pp";
+						if (r.getMetaData().hasColumnName("interaction"))
+						{
+							interaction = "" + r.get("interaction"); 
+						}
+
+						// for some reason Cytoscape throws a fit if we add edges one by one
+						// as they are published.
+						// To avoid that, we save them up here, and add them in one go in the done() method.
+						EdgeType edge = createEdgeIfNotExists(nSrc, nDest, interaction, edgesPostponed);
+
+						createNetworkHelper(mq, r, nSrc, nDest, edge);
 					}
-					
-					// for some reason Cytoscape throws a fit if we add edges one by one
-					// as they are published.
-					// To avoid that, we save them up here, and add them in one go in the done() method.
-					EdgeType edge = createEdgeIfNotExists(nSrc, nDest, interaction, edgesPostponed);
-					
-					createNetworkHelper(mq, r, nSrc, nDest, edge);
+				}
+				catch (IllegalArgumentException ex)
+				{
+					JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
+					this.cancel(true);
 				}
 			}
-			
+
 			@Override
 			protected void done()
 			{				
@@ -243,14 +259,87 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 				flushView();
 			}
 		};
-			
 
-		
+
+
 		int count;
 		try {
 			worker.execute();			
 			// dialog will be visible until swingWorker is done.
 			IndeterminateProgressDialog.createAndShow(getFrame(), "Executing query", worker);	
+			count = worker.get();
+			return count;
+		} 
+		catch (InterruptedException e) 
+		{
+			JOptionPane.showMessageDialog(getFrame(), "Interrupted");
+			e.printStackTrace();
+			return -1;
+		} 
+		catch (ExecutionException e) 
+		{
+			JOptionPane.showMessageDialog(getFrame(), "Exectution exception: " + e.getCause().getMessage());
+			e.printStackTrace();
+			return -1;
+		}
+	}
+
+	@Override
+	public final int addAttributesMatrix(String query) throws StreamException
+	{
+		TripleStore con = conMgr.getConnection();
+		if (con == null) return -1; // already showed error dialog at this point.
+
+		QuerySwingWorker worker = new QuerySwingWorker(con, query)
+		{
+			//			CyAttributes attr = Cytoscape.getNodeAttributes();
+			Set<NodeType> nodesAdded = new HashSet<NodeType>();
+
+			//			CyNetworkView view = Cytoscape.getNetworkView(cyNetwork.getIdentifier());
+
+			@Override
+			protected void process(List<Record> records)
+			{
+				try
+				{
+					for (Record r : records)
+					{
+						String src = "" + r.get("src");
+
+						// create node if it doesn't exist yet...
+						NodeType nSrc  = createNodeIfNotExists(src, nodesAdded);
+
+						String col = "" + r.get("column");
+						Object val = r.get("value");
+
+						setNodeAttribute(nSrc, col, val);
+					}
+				}				
+				catch (IllegalArgumentException ex)
+				{
+					JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
+					this.cancel(true);
+				}
+			}
+
+			@Override
+			protected void done()
+			{
+				finalizeNetworkAddition(nodesAdded, null);
+				copyNodeCoordinates();
+				flushView();
+			}
+
+		};
+
+		worker.execute();
+
+		// dialog will be visible until swingWorker is done.
+		IndeterminateProgressDialog.createAndShow(getFrame(), "Executing query", worker);	
+
+		int count = 0;
+
+		try {
 			count = worker.get();
 			return count;
 		} 
