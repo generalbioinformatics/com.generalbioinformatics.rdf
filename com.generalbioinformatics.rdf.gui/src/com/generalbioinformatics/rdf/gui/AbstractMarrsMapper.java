@@ -128,9 +128,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 		}
 	}
 
-	protected abstract void flushView();
 	protected abstract void finalizeNetworkAddition(Set<NodeType> nodesAdded, Set<EdgeType> edgesPostPoned);
-	protected abstract void copyNodeCoordinates();
 
 	protected abstract NodeType createNodeIfNotExists(String nodeId, Set<NodeType> nodesAdded);
 	protected abstract EdgeType createEdgeIfNotExists(NodeType nSrc, NodeType nDest, String interaction, Set<EdgeType> edgesPostponed);
@@ -177,8 +175,6 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			protected void done()
 			{
 				finalizeNetworkAddition(nodesAdded, null);
-				copyNodeCoordinates();
-				flushView();
 			}
 		};
 
@@ -255,8 +251,6 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			protected void done()
 			{				
 				finalizeNetworkAddition(nodesAdded, edgesPostponed);
-				copyNodeCoordinates();
-				flushView();
 			}
 		};
 
@@ -326,8 +320,6 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			protected void done()
 			{
 				finalizeNetworkAddition(nodesAdded, null);
-				copyNodeCoordinates();
-				flushView();
 			}
 
 		};
