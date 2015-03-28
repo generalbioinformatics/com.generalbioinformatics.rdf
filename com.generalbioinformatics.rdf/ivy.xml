@@ -7,7 +7,7 @@
 	<dependency org="org.apache" name="commons-io" rev="1.4+"/>
     <dependency org="nl.helixsoft" name="nl.helixsoft.util" rev="1.0.1"/>
     <dependency org="com.springsource" name="com.springsource.org.jdom" rev="1.1.0"/>
-    <dependency org="org.apache.jena" name="jena-all" rev="2.12.+"/><!-- note that this is an optional dependency -->
+    <dependency org="org.apache.jena" name="jena-all" rev="2.+"/><!-- note that this is an optional dependency -->
     <dependency org="openrdf-sesame" name="openrdf-sesame-all" rev="2.6.10.+"/><!-- note that this is an optional dependency -->
   </dependencies>
 </ivy-module>

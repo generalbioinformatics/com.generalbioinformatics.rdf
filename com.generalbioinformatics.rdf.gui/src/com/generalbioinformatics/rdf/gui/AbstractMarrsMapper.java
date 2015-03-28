@@ -162,7 +162,6 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 							setNodeAttribute(nSrc, key, r.get(i));
 						}
 					}
-
 					catch (IllegalArgumentException ex)
 					{
 						JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
