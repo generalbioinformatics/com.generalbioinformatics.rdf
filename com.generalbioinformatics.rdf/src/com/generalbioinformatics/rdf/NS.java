@@ -61,6 +61,7 @@ public class NS extends SimpleNamespaceMap
 	public static String idWormbase = "http://identifiers.org/wormbase/";
 	public static String idWikipathways = "http://identifiers.org/wikipathways/";
 	public static String idOrphanet = "http://identifiers.org/orphanet/";
+	public static String idNdc = "http://identifiers.org/ndc/";
 		
 	public NS()
 	{
