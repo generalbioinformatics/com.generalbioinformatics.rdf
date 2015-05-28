@@ -169,7 +169,7 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			String filter = queryData.get(key);
 			if ("uri-list".equals (filter))
 			{
-				Pattern pat = Pattern.compile ("\\s*<[-#_:/%.0-9a-zA-Z]+>(\\s*,\\s*<[-#_:/%.0-9a-zA-Z]+>)*\\s*$");
+				Pattern pat = Pattern.compile ("\\s*<[-~#_:/%.0-9a-zA-Z]+>(\\s*,\\s*<[-~#_:/%.0-9a-zA-Z]+>)*\\s*$");
 				Matcher mat = pat.matcher(contents);
 				if (!mat.matches())
 				{
@@ -178,7 +178,7 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			}
 			else if ("uri-bracketed".equals (filter)) /* difference between uri and uri-bracketed is the surrounding < and > characters */
 			{
-				Pattern pat = Pattern.compile ("\\s*<[-#_:/%.0-9a-zA-Z]+>\\s*");
+				Pattern pat = Pattern.compile ("\\s*<[-~#_:/%.0-9a-zA-Z]+>\\s*");
 				Matcher mat = pat.matcher(contents);
 				if (!mat.matches())
 				{
@@ -187,7 +187,7 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			}
 			else if ("uri".equals (filter))
 			{
-				Pattern pat = Pattern.compile ("[-#_:/%.0-9a-zA-Z]+");
+				Pattern pat = Pattern.compile ("[-~#_:/%.0-9a-zA-Z]+");
 				Matcher mat = pat.matcher(contents);
 				if (!mat.matches())
 				{
@@ -206,7 +206,7 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			else
 			{
 				/* most restrictive base pattern */
-				Pattern pat = Pattern.compile ("[-#_:/%.0-9a-zA-Z]+");
+				Pattern pat = Pattern.compile ("[-~#_:/%.0-9a-zA-Z]+");
 				Matcher mat = pat.matcher(contents);
 				if (!mat.matches())
 				{
