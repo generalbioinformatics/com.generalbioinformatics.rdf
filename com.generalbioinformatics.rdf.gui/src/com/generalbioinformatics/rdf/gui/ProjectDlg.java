@@ -111,8 +111,8 @@ public class ProjectDlg extends OkCancelDialog
 		btnEdit.addActionListener(new EditAction());
 		
 		btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.PAGE_AXIS));
-		btnPanel.add(btnAdd);
-		btnPanel.add(btnRm);
+//		btnPanel.add(btnAdd); // TODO ... implementation ...
+//		btnPanel.add(btnRm); // TODO ... implementation ...
 		btnPanel.add(btnEdit);
 		btnPanel.add(btnRun);
 		btnPanel.add(btnRunAll);
