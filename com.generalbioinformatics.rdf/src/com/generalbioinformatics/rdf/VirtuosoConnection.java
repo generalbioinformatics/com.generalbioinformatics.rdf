@@ -78,7 +78,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 			if (port == null) port = props.getProperty("port", "1111");
 		
 			String url = "jdbc:virtuoso://" + host + ":" + port + "/charset=UTF-8";
-			
+
 			try
 			{
 				con = DriverManager.getConnection(url, user, pass);
@@ -330,7 +330,12 @@ public class VirtuosoConnection extends AbstractTripleStore
 					
 					// the following two lines are copied from rdf_loader, but I removed the clustering aspect.
 					st.execute ("checkpoint_interval (0)"); // this disables checkpointing. See: http://docs.openlinksw.com/virtuoso/fn_checkpoint_interval.html
-					st.execute ("__dbf_set ('cl_non_logged_write_mode', 1)");
+					
+					try {
+						// TODO virtusoso 6 only...
+						st.execute ("__dbf_set ('cl_non_logged_write_mode', 1)");
+					} catch (VirtuosoException ex) {}
+					
 					st.execute(func);
 					st.execute ("checkpoint"); // do explicit checkpoint. This is a good idea in case of a crash, because we don't have the log to back us up.					
 				}

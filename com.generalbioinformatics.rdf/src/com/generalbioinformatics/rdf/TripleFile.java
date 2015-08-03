@@ -89,7 +89,8 @@ public class TripleFile extends AbstractTripleStore
 		rdfFile = aRdfFile;
 	}
 
-	private static String deduceLang(File aRdfFile) 
+	//TODO: move to utility class?
+	public static String deduceLang(File aRdfFile) 
 	{
 		String lang = "RDF/XML";
 		

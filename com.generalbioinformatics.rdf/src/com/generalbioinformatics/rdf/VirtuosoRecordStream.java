@@ -72,10 +72,15 @@ public class VirtuosoRecordStream extends AbstractRecordStream
 		}
 	}
 
-	private void close() throws SQLException 
+	public void close() 
 	{
 		closed = true;
-		rs.close();
+		try {
+			rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

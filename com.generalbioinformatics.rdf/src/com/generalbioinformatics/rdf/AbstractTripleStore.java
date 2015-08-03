@@ -90,7 +90,7 @@ public abstract class AbstractTripleStore implements TripleStore
 				}
 	
 				InputStream is = FileUtils.openZipStream(out);
-				rs = TsvRecordStream.open (new InputStreamReader(is)).filterComments().get();
+				rs = TsvRecordStream.open (is).filterComments().get();
 			}		
 	
 			return rs;

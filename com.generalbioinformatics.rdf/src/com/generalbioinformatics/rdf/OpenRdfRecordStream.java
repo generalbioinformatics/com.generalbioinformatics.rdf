@@ -60,4 +60,14 @@ public class OpenRdfRecordStream extends AbstractRecordStream
 		return rmd;
 	}
 
+	@Override
+	public void close() {
+		try {
+			tqs.close();
+		} catch (QueryEvaluationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 }

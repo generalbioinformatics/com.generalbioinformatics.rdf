@@ -96,4 +96,7 @@ public class JenaRecordStream extends AbstractRecordStream
 		return rmd;
 	}
 
+	@Override
+	public void close() { }
+
 }
