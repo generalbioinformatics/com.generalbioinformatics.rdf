@@ -92,10 +92,16 @@ public class TripleFile extends AbstractTripleStore
 	//TODO: move to utility class?
 	public static String deduceLang(File aRdfFile) 
 	{
+		return deduceLang (aRdfFile.getName());
+	}
+
+	//TODO: move to utility class?
+	public static String deduceLang(String aRdfFile) 
+	{
 		String lang = "RDF/XML";
 		
 		// remove any .gz extension
-		String name = aRdfFile.getName().replaceAll(".gz$", ""); 
+		String name = aRdfFile.replaceAll(".gz$", ""); 
 		
 		if (name.endsWith(".ttl"))
 		{

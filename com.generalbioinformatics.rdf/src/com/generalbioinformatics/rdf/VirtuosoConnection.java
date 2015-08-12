@@ -88,7 +88,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 				rethrowWithTips(ex);
 			}
 			
-			if (tempDir == null) tempDir = new File (props.getProperty("vload.directory", "/local/tmp/virtuoso-tmp"));
+			if (tempDir == null) tempDir = new File (props.getProperty("vload.directory", "/local/tmp/virtuoso-tmp"));			
 
 		}
 		return con;
@@ -274,6 +274,47 @@ public class VirtuosoConnection extends AbstractTripleStore
 		{
 			rethrowWithTips(ex);
 		}
+	}
+	
+	public int getVirtuosoMajorVersion() throws SQLException, IOException
+	{
+		String s = getVirtuosoVersionString();
+		if (s.length() < 2) return -1;
+		Integer result = StringUtils.safeParseInt(s.substring(0, 2));
+		if (result == null) return -1;
+		return result;
+	}
+	
+	public String getVirtuosoVersionString() throws SQLException, IOException
+	{
+		String result = "Could not obtain version";
+		Statement st = getConnection().createStatement();
+		try
+		{
+			//TODO: better, but not working in JDBC - why?
+			/*
+			ResultSet rs = st.executeQuery("select sys_stat('st_dbms_ver');");
+			rs.next();
+			result = rs.getString(1);
+			*/
+						
+			ResultSet rs = st.executeQuery("status()");
+			String versionLine = "Version ";
+			while (rs.next())
+			{
+				String s = rs.getString(1);
+				
+				if (s.startsWith (versionLine))
+				{
+					result = s.substring(versionLine.length());
+				}
+			}
+		}
+		finally
+		{
+			st.close();
+		}
+		return result;
 	}
 	
 	/**
