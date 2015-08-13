@@ -48,4 +48,7 @@ public interface TripleStore
 	 * Setting it to null disables caching.
 	 */
 	void setCacheDir(File dir);
+	
+	void addListener(TripleStoreListener l);
+	void removeListener (TripleStoreListener l);
 }

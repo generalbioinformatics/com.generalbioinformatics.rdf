@@ -60,7 +60,7 @@ public class Utils
 	 * This is a helper that takes a query and saves it to File with some metadata.
 	 * Used by SparqlToTsv as well as VirtuosoConnection
 	 */
-	public static void queryResultsToFile(TripleStore tr, long start, RecordStream rs, String query, OutputStream os) throws StreamException, UnknownHostException
+	public static void queryResultsToFile(TripleStore tr, long delta, RecordStream rs, String query, OutputStream os) throws StreamException, UnknownHostException
 	{		
 		PrintStream fos = new PrintStream (os);
 
@@ -79,7 +79,6 @@ public class Utils
 		String username = System.getProperty("user.name");
 		fos.println ("# " + username + "@" + computername);
 		// Important, because it helps to detect quiet time-out queries.
-		long delta = System.currentTimeMillis() - start;
 		fos.println ("# Query time: " + delta);
 	}
 	

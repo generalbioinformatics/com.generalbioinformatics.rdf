@@ -8,8 +8,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 import nl.helixsoft.recordstream.RecordStream;
@@ -32,7 +33,7 @@ public abstract class AbstractTripleStore implements TripleStore
 	}
 	
 	public RecordStream sparqlSelect(String query) throws StreamException
-	{	
+	{
 		try
 		{
 			RecordStream rs;
@@ -42,6 +43,8 @@ public abstract class AbstractTripleStore implements TripleStore
 			if (cacheDir == null)
 			{
 				rs = _sparqlSelectDirect(query);
+				long delta = System.currentTimeMillis() - start;
+				fireQueryPerformed (query, delta);
 			}
 			else
 			{
@@ -72,9 +75,11 @@ public abstract class AbstractTripleStore implements TripleStore
 						OutputStream os = new FileOutputStream (tmp);
 						GZIPOutputStream gos = new GZIPOutputStream(os);
 						RecordStream rsx = _sparqlSelectDirect(query);
-						Utils.queryResultsToFile(this, start, rsx, query, gos);
+						long delta = System.currentTimeMillis() - start;
+						Utils.queryResultsToFile(this, delta, rsx, query, gos);
 						gos.finish();
 						os.close();
+						fireQueryPerformed (query, delta);
 					}
 					catch (RuntimeException e)
 					{
@@ -101,8 +106,23 @@ public abstract class AbstractTripleStore implements TripleStore
 		}
 	}
 
+	protected void fireQueryPerformed(String query, long delta) 
+	{
+		for (TripleStoreListener l : listeners)
+		{
+			l.queryPerformed(query, delta);
+		}
+	}
+
 	private NS namespaces = new NS();
 
 	public NamespaceMap getNamespaces() { return namespaces; }
 
+	private List<TripleStoreListener> listeners = new ArrayList<TripleStoreListener>();
+	
+	@Override
+	public void addListener(TripleStoreListener l) { listeners.add (l); }
+	
+	@Override
+	public void removeListener(TripleStoreListener l) { listeners.remove (l); }
 }
