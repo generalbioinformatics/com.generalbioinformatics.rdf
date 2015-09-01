@@ -74,7 +74,11 @@ public class NS extends SimpleNamespaceMap
 	public static String idKeggPathway = "http://identifiers.org/kegg.pathway/";
 
 	public static String idMesh = "http://identifiers.org/mesh/";
+	
+	@Deprecated /** use idMgd */
+	public static String idMgi = "http://identifiers.org/mgd/";
 	public static String idMgd = "http://identifiers.org/mgd/";
+	
 	public static String idMiriam = "http://identifiers.org/miriam.collection/";
 	
 	public static String idNdc = "http://identifiers.org/ndc/";
