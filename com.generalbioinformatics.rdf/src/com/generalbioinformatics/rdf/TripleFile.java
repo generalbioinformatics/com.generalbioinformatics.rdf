@@ -133,11 +133,8 @@ public class TripleFile extends AbstractTripleStore
 	
 			// Execute the query and obtain results
 			QueryExecution qe = QueryExecutionFactory.create(q, getModel());
-			ResultSet results = qe.execSelect();
-	
-			//NOTE: not closing qe here. 
-			// If we closed qe, the resulting recordstream would be empty.
-			return new JenaRecordStream(results);
+			ResultSet results = qe.execSelect();	
+			return new JenaRecordStream(results, qe);
 		}
 		catch (JenaException ex)
 		{

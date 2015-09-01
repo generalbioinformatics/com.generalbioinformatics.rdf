@@ -14,6 +14,7 @@ import nl.helixsoft.recordstream.Record;
 import nl.helixsoft.recordstream.RecordMetaData;
 import nl.helixsoft.recordstream.StreamException;
 
+import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -24,15 +25,28 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 public class JenaRecordStream extends AbstractRecordStream
 {
 	private final ResultSet rs;
+	private final QueryExecution qe;
+	
 	private QuerySolution next;
 	private List<String> names = new ArrayList<String>();
 //	private Map<String, Integer> map = new HashMap<String, Integer>();
 	
 	private final RecordMetaData rmd;
-	
+
 	public JenaRecordStream(ResultSet rs) 
 	{
+		this (rs, null);
+	}
+	
+	/**
+	 * QueryExecution can optionally be passed - it will be closed when this recordstream is closed.
+	 * @param rs
+	 * @param qe
+	 */
+	public JenaRecordStream(ResultSet rs, QueryExecution qe) 
+	{
 		this.rs = rs;
+		this.qe = qe;
 		
 		int i = 0;
 		for (String name : rs.getResultVars())
@@ -53,6 +67,7 @@ public class JenaRecordStream extends AbstractRecordStream
 		
 		rmd = new DefaultRecordMetaData(names);
 	}
+
 
 	@Override
 	public Record getNext() throws StreamException
@@ -97,6 +112,9 @@ public class JenaRecordStream extends AbstractRecordStream
 	}
 
 	@Override
-	public void close() { }
+	public void close() 
+	{
+		if (qe != null) { qe.close(); }
+	}
 
 }
