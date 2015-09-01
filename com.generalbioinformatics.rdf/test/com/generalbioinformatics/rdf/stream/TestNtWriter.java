@@ -2,11 +2,10 @@ package com.generalbioinformatics.rdf.stream;
 
 import java.io.IOException;
 
-import nl.helixsoft.util.StringUtils;
-
-import com.generalbioinformatics.rdf.stream.NtWriter;
+import com.generalbioinformatics.rdf.NS;
 
 import junit.framework.TestCase;
+import nl.helixsoft.util.StringUtils;
 
 public class TestNtWriter extends TestCase 
 {
@@ -36,7 +35,7 @@ public class TestNtWriter extends TestCase
 
 	}
 	
-	public void testValidationStricht() throws IOException
+	public void testValidationStrict() throws IOException
 	{
 		NtWriter writer = new NtWriter (System.out);
 		writer.setStrictValidation (true);
@@ -87,6 +86,26 @@ public class TestNtWriter extends TestCase
 				fail ("Should not have received RuntimeException");
 			}		
 		}
+
+	}
+
+	public void testValidationStrict2() throws IOException
+	{
+		NtWriter nt = new NtWriter(System.out);
+
+		try
+		{
+			nt.writeLiteral (NS.idUniprot + "P42336", NS.RDF + "type", "Protein");
+			fail ("Should have received RuntimeException");
+		}
+		catch (RuntimeException e) { /* expected */ }
+		
+		try
+		{
+			nt.writeStatement (NS.idUniprot + "P42336", NS.RDFS + "label", NS.idHgncSymbol + "PIK3CA");
+			fail ("Should have received RuntimeException");
+		}
+		catch (RuntimeException e) { /* expected */ }
 
 	}
 	

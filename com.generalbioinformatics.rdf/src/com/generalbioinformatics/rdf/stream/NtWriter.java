@@ -49,7 +49,7 @@ public class NtWriter
 	private static final String CHARSET = "UTF-8"; // NT is always in UTF-8 (even on windows), in accordance with N-triple specs. 
 	
 	private boolean validate = true; // perform validation checks before writing
-	private boolean strict = true; // perform a level of validation that is more strict than just the bare minimum defined by RDF 
+	private NtStreamValidator strictValidator = new DefaultNtStreamValidator(); // perform a level of validation that is more strict than just the bare minimum defined by RDF 
 	private boolean escapeUnicode = false;
 	
 	private long stmtCount = 0;
@@ -123,20 +123,13 @@ public class NtWriter
 	//	# Match empty string, unprintable characters, space, and '>'
 	private static Pattern basicInvalidUriPattern = Pattern.compile("(^$|[\\x00-\\x20>])");
 	
-	// more strict formatting for URIs
-	// maximum length accepted by virtuoso is ~1900 characters
-	private static Pattern strictValidUriPattern = Pattern.compile("^http://[^\\x00-\\x20>]+[/#][^\\x00-\\x20>]{1,1890}$");
-
 	private void validateUri(String uri)
 	{
 		DebugUtils.testNull ("uri", uri);
 		
-		if (strict)
+		if (strictValidator != null)
 		{
-			if (!strictValidUriPattern.matcher(uri).matches())
-			{
-				throw new RuntimeException ("URI Fails strict validation: '" + uri + "'");
-			}
+			strictValidator.validateUri(uri);
 		}
 		else
 		{
@@ -152,6 +145,10 @@ public class NtWriter
 	{
 		if (validate)
 		{
+			if (strictValidator != null)
+			{
+				strictValidator.validateStatement(s, p, o);
+			}
 			validateUri (s);
 			validateUri (p);
 			validateUri (o);
@@ -240,10 +237,9 @@ public class NtWriter
 	{
 		DebugUtils.testNull ("o", o);
 		
-		if (strict)
+		if (strictValidator != null)
 		{
-			if (o instanceof String && o.equals ("null")) 
-				throw new RuntimeException ("Literal Fails strict validation: '" + o + "'");
+			strictValidator.validateLiteral(o);
 		}
 	}
 	
@@ -251,6 +247,10 @@ public class NtWriter
 	{
 		if (validate)
 		{
+			if (strictValidator != null)
+			{
+				strictValidator.validateLiteral(s, p, o);
+			}	
 			validateUri (s.toString());
 			validateUri (p.toString());
 			validateLiteral (o);
@@ -264,6 +264,10 @@ public class NtWriter
 	{
 		if (validate)
 		{
+			if (strictValidator != null)
+			{
+				strictValidator.validateLiteral(s, p, o);
+			}	
 			validateUri (s);
 			validateUri (p);
 		}
@@ -336,14 +340,26 @@ public class NtWriter
 	{
 		if (value)
 		{
-			strict = true;
+			strictValidator = new DefaultNtStreamValidator();
 			validate = true;
 		}
 		else
 		{
-			strict = false;
+			strictValidator = null;
 		}
 		
+	}
+
+	public NtStreamValidator getValidator() { return strictValidator; }
+
+	/**
+	 * Supply a different triple validator instead of the default one.
+	 * You may set this to null, in which case strict validation is disabled.
+	 */
+	public void setStrictValidation(NtStreamValidator value) 
+	{ 
+		strictValidator = value;
+		if (value != null) validate = true;
 	}
 
 }
