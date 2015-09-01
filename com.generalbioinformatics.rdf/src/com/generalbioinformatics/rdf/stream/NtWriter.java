@@ -356,7 +356,7 @@ public class NtWriter
 	 * Supply a different triple validator instead of the default one.
 	 * You may set this to null, in which case strict validation is disabled.
 	 */
-	public void setStrictValidation(NtStreamValidator value) 
+	public void setValidator(NtStreamValidator value) 
 	{ 
 		strictValidator = value;
 		if (value != null) validate = true;
