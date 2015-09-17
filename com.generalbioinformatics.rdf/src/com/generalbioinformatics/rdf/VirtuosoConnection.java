@@ -16,23 +16,25 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.FileUtils;
+
+import com.generalbioinformatics.rdf.stream.NtWriter;
 
 import nl.helixsoft.recordstream.Record;
 import nl.helixsoft.recordstream.RecordStream;
 import nl.helixsoft.recordstream.ResultSetRecordStream;
 import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
+import nl.helixsoft.util.HFileUtils;
 import nl.helixsoft.util.StringUtils;
-
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.FileUtils;
-
 import virtuoso.jdbc3.VirtuosoException;
-
-import com.generalbioinformatics.rdf.stream.NtWriter;
 
 /**
  * This class is a wrapper for a JDBC connection to virtuoso.
@@ -316,6 +318,81 @@ public class VirtuosoConnection extends AbstractTripleStore
 		}
 		return result;
 	}
+
+	
+	Statement batchStatement = null;
+	String batchGraphUri = null;
+	
+	/**
+	 * Prepare to load one or more files in a single commit batch.
+	 */
+	public void vloadBatchStart(String graphUri) throws SQLException, IOException
+	{
+		assert (batchStatement == null);
+		assert (batchGraphUri == null);
+		
+		batchGraphUri = graphUri;
+		try
+		{	
+			Connection con = getConnection();
+			batchStatement = con.createStatement();
+			logEnable (batchStatement, true, false);
+			
+			// the following two lines are copied from rdf_loader, but I removed the clustering aspect.
+			batchStatement.execute ("checkpoint_interval (0)"); // this disables checkpointing. See: http://docs.openlinksw.com/virtuoso/fn_checkpoint_interval.html
+			
+			try {
+				// TODO virtusoso 6 only...
+				batchStatement.execute ("__dbf_set ('cl_non_logged_write_mode', 1)");
+			} catch (VirtuosoException ex) {}
+
+		}
+		catch (VirtuosoException ex)
+		{
+			rethrowWithTips(ex);
+		}
+	
+
+	}
+	
+	public void vloadBatchAdd(File f) throws FileNotFoundException, IOException, SQLException
+	{
+		assert (batchStatement != null);
+		assert (batchGraphUri != null);
+		
+		try
+		{
+			vloadSingleFileHelper(f, batchGraphUri, batchStatement);
+		}
+		catch (VirtuosoException ex)
+		{
+			rethrowWithTips(ex);
+		}
+
+	}
+	
+	public void vloadBatchEnd() throws SQLException
+	{
+		assert (batchStatement != null);
+		assert (batchGraphUri != null);
+		
+		try
+		{
+			batchStatement.execute ("checkpoint"); // do explicit checkpoint. This is a good idea in case of a crash, because we don't have the log to back us up.					
+		}
+		catch (VirtuosoException ex)
+		{
+			rethrowWithTips(ex);
+		}
+		finally
+		{
+			if (batchStatement != null)
+				batchStatement.close();
+		}				
+
+		batchGraphUri = null;
+		batchStatement = null;
+	}
 	
 	/**
 	 * Load in RDF data from file.
@@ -327,77 +404,87 @@ public class VirtuosoConnection extends AbstractTripleStore
 	 */
 	public void vload(File f, String graphUri) throws SQLException, IOException
 	{
-		Connection con = getConnection();
-		
-		String fabs = f.getAbsolutePath();
-		if (!f.exists()) throw new FileNotFoundException("File " + fabs + " not found.");
-		String fname = f.toString().toLowerCase();
-		if (fabs.contains("'") || graphUri.contains("'")) 
-				throw new IllegalArgumentException ("Graph Uri and file name may not contain quote characters (')!");
-		
-		File tempDir = getTempDir();
+		vloadBatchStart(graphUri);
+		vloadBatchAdd(f);
+		vloadBatchEnd();
+	}
 
-		File dest = File.createTempFile("vload-", f.getName().replaceAll(" ", "_"), tempDir);
-		FileUtils.copyFile(f, dest);
-		
-		assert (dest.exists());
-		
+	/**
+	 * Vload a single file.
+	 * Statement is already prepared with logging enabled and checkpointing disabled.
+	 * Does NOT do a commit at the end.
+	 * <p>
+	 * This function is useful for batching several files in a single commit.
+	 */
+	private void vloadSingleFileHelper(File f, String graphUri, Statement st)
+								throws FileNotFoundException, IOException, SQLException 
+	{
+		File tempFile = null;
 		try
-		{	
-			String func = null;
-			if (fname.endsWith (".rdf") || fname.endsWith(".owl")) // rdf-xml
-				func = "DB.DBA.RDF_LOAD_RDFXML_MT(file_to_string_output('" + dest + "'), '', '" + graphUri + "')";
-			if (fname.endsWith (".rdf.gz") || fname.endsWith(".owl.gz")) // gzipped rdf-xml
-				func = "DB.DBA.RDF_LOAD_RDFXML_MT(gz_file_open('" + dest + "'), '', '" + graphUri + "')";
-			else if (fname.endsWith(".ttl") || fname.endsWith(".n3")) // Turtle / N3
-				func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
-			else if (fname.endsWith(".nt")) // n-triple
-				func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
-			else if (fname.endsWith(".n3")) // n3
-				func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
-			else if (fname.endsWith(".nt.gz")) // gzipped n-triple
-				func = "DB.DBA.TTLP_MT(gz_file_open('" + dest + "'),'','" + graphUri + "', 255)";
-			else if (fname.endsWith(".ttl.gz") || fname.endsWith(".n3.gz")) // gzipped ttl
-				func = "DB.DBA.TTLP_MT(gz_file_open('" + dest + "'),'','" + graphUri + "', 255)";
-			else if (fname.endsWith(".nq")) // n-quad
-				func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 512)";
+		{
+			String fabs = f.getAbsolutePath();
+			if (!f.exists()) throw new FileNotFoundException("File " + fabs + " not found.");
 			
-			if (func != null)
+			String fname = f.toString().toLowerCase();
+			if (fabs.contains("'") || graphUri.contains("'")) 
+					throw new IllegalArgumentException ("Graph Uri and file name may not contain quote characters (')!");
+			
+			File tempDir = getTempDir();
+
+			// check if f is below virtuoso load dir
+			// if not, copy it there.
+			File dest;
+			tempFile = null;
+			if (!HFileUtils.isBelowDirectory(tempDir, f))
 			{
-				Statement st = con.createStatement();
-				try
-				{
-					logEnable (st, true, false);
-					
-					// the following two lines are copied from rdf_loader, but I removed the clustering aspect.
-					st.execute ("checkpoint_interval (0)"); // this disables checkpointing. See: http://docs.openlinksw.com/virtuoso/fn_checkpoint_interval.html
-					
-					try {
-						// TODO virtusoso 6 only...
-						st.execute ("__dbf_set ('cl_non_logged_write_mode', 1)");
-					} catch (VirtuosoException ex) {}
-					
-					st.execute(func);
-					st.execute ("checkpoint"); // do explicit checkpoint. This is a good idea in case of a crash, because we don't have the log to back us up.					
-				}
-				catch (VirtuosoException ex)
-				{
-					rethrowWithTips(ex);
-				}
-				finally
-				{
-					st.close();
-				}				
+				// System.out.println ("Copying file to virtuoso temp directory " + tempDir); //TODO: loglevel=DEBUG
+				tempFile = File.createTempFile("vload-", f.getName().replaceAll(" ", "_"), tempDir);
+				FileUtils.copyFile(f, tempFile);
+				dest = tempFile;
 			}
 			else
 			{
-				throw new IllegalArgumentException ("File type not supported: " + fabs);
-			}
+				dest = f;
+				tempFile = null;
+			}		
+			
+			assert (dest.exists());
+
+			String func = composeVloadSql(graphUri, fname, dest);
+			if (func == null) throw new IllegalArgumentException ("File type not supported: " + fabs);
+			
+			st.execute(func);
 		}
 		finally
 		{
-			dest.delete();
+			if (tempFile != null)
+				tempFile.delete();
 		}
+	}
+
+	/**
+	 * Compose the Virtuoso/SQL statement to call to vload the given file into the given graph
+	 */
+	private String composeVloadSql(String graphUri, String fname, File dest) 
+	{
+		String func = null;
+		if (fname.endsWith (".rdf") || fname.endsWith(".owl")) // rdf-xml
+			func = "DB.DBA.RDF_LOAD_RDFXML_MT(file_to_string_output('" + dest + "'), '', '" + graphUri + "')";
+		if (fname.endsWith (".rdf.gz") || fname.endsWith(".owl.gz")) // gzipped rdf-xml
+			func = "DB.DBA.RDF_LOAD_RDFXML_MT(gz_file_open('" + dest + "'), '', '" + graphUri + "')";
+		else if (fname.endsWith(".ttl") || fname.endsWith(".n3")) // Turtle / N3
+			func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
+		else if (fname.endsWith(".nt")) // n-triple
+			func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
+		else if (fname.endsWith(".n3")) // n3
+			func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 255)";
+		else if (fname.endsWith(".nt.gz")) // gzipped n-triple
+			func = "DB.DBA.TTLP_MT(gz_file_open('" + dest + "'),'','" + graphUri + "', 255)";
+		else if (fname.endsWith(".ttl.gz") || fname.endsWith(".n3.gz")) // gzipped ttl
+			func = "DB.DBA.TTLP_MT(gz_file_open('" + dest + "'),'','" + graphUri + "', 255)";
+		else if (fname.endsWith(".nq")) // n-quad
+			func = "DB.DBA.TTLP_MT(file_to_string_output('" + dest + "'),'','" + graphUri + "', 512)";
+		return func;
 	}
 	
 	public File getTempDir() throws FileNotFoundException {
