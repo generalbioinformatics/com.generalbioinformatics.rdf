@@ -16,14 +16,14 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.generalbioinformatics.rdf.stream.NtWriter;
 
@@ -47,7 +47,22 @@ import virtuoso.jdbc3.VirtuosoException;
  */
 public class VirtuosoConnection extends AbstractTripleStore
 {
-	
+	Logger log = LoggerFactory.getLogger("com.generalbioinformatics.rdf.VirtuosoConnection");
+
+	/** wrapper to execute a JDBC statement with tracing */ 
+	private ResultSet executeQuery(Statement st, String sql) throws SQLException
+	{
+		log.trace(sql);
+		return st.executeQuery(sql);
+	}
+
+	/** wrapper to execute a JDBC statement with tracing */
+	private boolean execute(Statement st, String sql) throws SQLException
+	{
+		log.trace(sql);
+		return st.execute(sql);
+	}
+
 	public VirtuosoConnection() throws ClassNotFoundException
 	{
 		this(null);
@@ -141,7 +156,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		try
 		{
 			Statement st = getConnection().createStatement();
-			ResultSet result = st.executeQuery("SPARQL " + prefixes + " " + query);
+			ResultSet result = executeQuery(st, "SPARQL " + prefixes + " " + query);
 			RecordStream rs = new VirtuosoRecordStream(result);
 			return rs;
 		}
@@ -158,7 +173,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		try
 		{
 			Statement st = getConnection().createStatement();
-			ResultSet result = st.executeQuery("SPARQL " + prefixes + " " + query);
+			ResultSet result = executeQuery(st, "SPARQL " + prefixes + " " + query);
 			Stream<com.generalbioinformatics.rdf.stream.Statement> ss = new VirtuosoStatementStream(result);
 			return ss;
 		}
@@ -180,7 +195,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 			//TODO: evaluate
 			logEnable(st, true, false); 
 			
-			RecordStream rs = new ResultSetRecordStream(st.executeQuery("SPARQL " + prefixes + " " + query));
+			RecordStream rs = new ResultSetRecordStream(executeQuery(st, "SPARQL " + prefixes + " " + query));
 			
 			NtWriter nt = new NtWriter (os);
 			
@@ -266,7 +281,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		try
 		{
 			Statement st = getConnection().createStatement();
-			st.execute(
+			execute(st, 
 					"UPDATE DB.DBA.RDF_QUAD TABLE OPTION (index RDF_QUAD_GS) " + 
 						"  SET g = iri_to_id ('" + newName + "') " +
 						"WHERE g = iri_to_id ('" + oldName + "', 0)"
@@ -295,12 +310,12 @@ public class VirtuosoConnection extends AbstractTripleStore
 		{
 			//TODO: better, but not working in JDBC - why?
 			/*
-			ResultSet rs = st.executeQuery("select sys_stat('st_dbms_ver');");
+			ResultSet rs = executeQuery(st, "select sys_stat('st_dbms_ver');");
 			rs.next();
 			result = rs.getString(1);
 			*/
 						
-			ResultSet rs = st.executeQuery("status()");
+			ResultSet rs = executeQuery(st, "status()");
 			String versionLine = "Version ";
 			while (rs.next())
 			{
@@ -339,11 +354,11 @@ public class VirtuosoConnection extends AbstractTripleStore
 			logEnable (batchStatement, true, false);
 			
 			// the following two lines are copied from rdf_loader, but I removed the clustering aspect.
-			batchStatement.execute ("checkpoint_interval (0)"); // this disables checkpointing. See: http://docs.openlinksw.com/virtuoso/fn_checkpoint_interval.html
+			execute (batchStatement, "checkpoint_interval (0)"); // this disables checkpointing. See: http://docs.openlinksw.com/virtuoso/fn_checkpoint_interval.html
 			
 			try {
 				// TODO virtusoso 6 only...
-				batchStatement.execute ("__dbf_set ('cl_non_logged_write_mode', 1)");
+				execute (batchStatement, "__dbf_set ('cl_non_logged_write_mode', 1)");
 			} catch (VirtuosoException ex) {}
 
 		}
@@ -378,7 +393,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		
 		try
 		{
-			batchStatement.execute ("checkpoint"); // do explicit checkpoint. This is a good idea in case of a crash, because we don't have the log to back us up.					
+			execute (batchStatement, "checkpoint"); // do explicit checkpoint. This is a good idea in case of a crash, because we don't have the log to back us up.					
 		}
 		catch (VirtuosoException ex)
 		{
@@ -437,7 +452,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 			tempFile = null;
 			if (!HFileUtils.isBelowDirectory(tempDir, f))
 			{
-				// System.out.println ("Copying file to virtuoso temp directory " + tempDir); //TODO: loglevel=DEBUG
+				log.debug ("Copying file to virtuoso temp directory " + tempDir);
 				tempFile = File.createTempFile("vload-", f.getName().replaceAll(" ", "_"), tempDir);
 				FileUtils.copyFile(f, tempFile);
 				dest = tempFile;
@@ -453,7 +468,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 			String func = composeVloadSql(graphUri, fname, dest);
 			if (func == null) throw new IllegalArgumentException ("File type not supported: " + fabs);
 			
-			st.execute(func);
+			execute(st, func);
 		}
 		finally
 		{
@@ -551,8 +566,8 @@ public class VirtuosoConnection extends AbstractTripleStore
 		Statement st = getConnection().createStatement();
 		try
 		{
-			st.execute(proc);
-			st.execute(func);
+			execute(st, proc);
+			execute(st, func);
 		}
 		catch (VirtuosoException ex)
 		{
@@ -563,7 +578,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		{
 			if (g.getName().startsWith (f.getName()))
 			{
-				System.out.println ("output: " + g.getName());
+				log.info ("output: " + g.getName());
 				FileUtils. moveFile(g, new File (f.getParentFile(), g.getName()));
 			}
 		}
@@ -587,7 +602,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		try
 		{
 			
-			ResultSet rs = st.executeQuery("SPARQL SELECT ?s ?p ?o FROM <" + graph + "> WHERE { ?s ?p ?o . }");
+			ResultSet rs = executeQuery(st, "SPARQL SELECT ?s ?p ?o FROM <" + graph + "> WHERE { ?s ?p ?o . }");
 			while (rs.next())
 			{
 				digest.update(rs.getString(1).getBytes());
@@ -654,7 +669,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		if (iniFile == null)
 		{
 			Statement st = con.createStatement();
-			ResultSet rs = st.executeQuery("SELECT server_root (), virtuoso_ini_path ();");
+			ResultSet rs = executeQuery(st, "SELECT server_root (), virtuoso_ini_path ();");
 			rs.next();
 			iniFile = new File (rs.getString(0), rs.getString(1));
 		}
@@ -671,7 +686,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		Statement st = getConnection().createStatement();
 		try
 		{
-			return st.execute(string);
+			return execute(st, string);
 		}
 		catch (VirtuosoException ex)
 		{
@@ -685,7 +700,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		Statement st = getConnection().createStatement();
 		try
 		{
-			return new ResultSetRecordStream(st.executeQuery(string));
+			return new ResultSetRecordStream(executeQuery(st, string));
 		}
 		catch (VirtuosoException ex)
 		{
@@ -704,12 +719,12 @@ public class VirtuosoConnection extends AbstractTripleStore
 		 */
 		int newValue = (loggingEnabled ? 1 : 0) + (autoCommitEnabled ? 2 : 0);
 		
-		st.executeQuery("log_enable(" + newValue + ",1)"); // enable log
+		executeQuery(st, "log_enable(" + newValue + ",1)"); // enable log
 	}
 	
 	private int readLogEnable(Statement st) throws SQLException
 	{
-		ResultSet rs = st.executeQuery("SELECT log_enable(NULL)"); // enable log
+		ResultSet rs = executeQuery(st, "SELECT log_enable(NULL)"); // enable log
 		rs.next();
 		return rs.getInt(1);
 	}
@@ -741,7 +756,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 
 			//TODO: input sanitization
 			String q = "SPARQL CLEAR GRAPH <" + graphUri + ">";
-			rs = st.executeQuery(q);
+			rs = executeQuery(st, q);
 		}
 		finally
 		{
@@ -760,7 +775,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		
 		String sql = 
 		"DB.DBA.XML_SET_NS_DECL ('" + prefix + "', '" + uri + "', 2)";
-		ResultSet rs = st.executeQuery(sql);
+		ResultSet rs = executeQuery(st, sql);
 		rs.next();
 	}
 	
@@ -769,7 +784,7 @@ public class VirtuosoConnection extends AbstractTripleStore
 		Map<String, String> result = new HashMap<String, String>();
 		Statement st = getConnection().createStatement();
 		String sql = "SELECT NS_PREFIX, NS_URL FROM DB.DBA.SYS_XML_PERSISTENT_NS_DECL";
-		ResultSet rs = st.executeQuery(sql);
+		ResultSet rs = executeQuery(st, sql);
 		while (rs.next())
 		{
 			String prefix = rs.getString("NS_PREFIX");
