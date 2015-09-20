@@ -1,0 +1,18 @@
+
+
+dependencies {
+
+	compile "nl.helixsoft:nl.helixsoft.util:1.0.1",
+		"nl.helixsoft:nl.helixsoft.gui:1.0.1",
+		"nl.helixsoft:nl.helixsoft.bridgedb.bio:1.+",
+		"jsyntaxpane:jsyntaxpane:0.9.5.+",
+		"org.kohsuke:org.kohsuke.args4j:2.0+",
+		"com.springsource:com.springsource.org.jdom:1.1.0",
+		"org.bridgedb:org.bridgedb:1+",
+		"org.apache:commons-codec:1.5",
+		project (":com.generalbioinformatics.rdf")
+
+    testCompile group: 'junit', name: 'junit', version: '3.+'   
+}
+
+sourceSets.main.java.srcDirs = ['src', 'src-generated']

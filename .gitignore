@@ -1,10 +1,8 @@
-ivysettings.xml
 .classpath
 .project
 bin/
 build/
-ivycache/
 .settings/
 build.properties
 /*.jar
-/ivy.xml
+.gradle/
