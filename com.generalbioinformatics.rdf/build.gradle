@@ -1,6 +1,7 @@
 
 configurations {
     provided
+    embed
 }
 
 dependencies {
@@ -10,12 +11,19 @@ dependencies {
 
 	compile "org.apache:commons-io:1.4+",
 		"nl.helixsoft:nl.helixsoft.util:1.0.1",
-		"com.springsource:com.springsource.org.jdom:1.1.0",
-		fileTree(dir: 'lib', include: '*.jar')
+		"com.springsource:com.springsource.org.jdom:1.1.0"
+	
+	embed fileTree(dir: 'lib', include: '*.jar')
 		
     testCompile group: 'junit', name: 'junit', version: '3.+'
 }
 
+jar {
+	from configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
+}
+
 sourceSets.main.compileClasspath += configurations.provided
+sourceSets.main.compileClasspath += configurations.embed
 sourceSets.test.compileClasspath += configurations.provided
+sourceSets.test.compileClasspath += configurations.embed
 
