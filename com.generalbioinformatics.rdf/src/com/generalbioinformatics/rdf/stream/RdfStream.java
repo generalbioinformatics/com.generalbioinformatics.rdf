@@ -41,13 +41,19 @@ public class RdfStream extends AbstractTripleStream
 	};
 
 	public RdfStream(InputStream parent) throws XMLStreamException,
+	ParseException {
+		this (parent, null);
+	}
+	
+	public RdfStream(InputStream parent, String aXmlBase) throws XMLStreamException,
 			ParseException {
 		XMLInputFactory factory = XMLInputFactory.newInstance();
 		factory.setProperty(XMLInputFactory.SUPPORT_DTD, false); // avoid
 																	// downloading
 																	// DTD
 		parser = factory.createXMLStreamReader(parent);
-
+		xmlBase = aXmlBase;
+		
 		// parse until we've read RDF attributes
 		while (parseState != ParseState.NODE) {
 			int event = parser.next();
@@ -319,6 +325,7 @@ public class RdfStream extends AbstractTripleStream
 	{
 		if (!uri.matches("^\\w+:/.*"))
 		{
+			assert (xmlBase != null) : "Need default namespace, none provided.";
 			uri = xmlBase + uri;
 		}
 		return uri;

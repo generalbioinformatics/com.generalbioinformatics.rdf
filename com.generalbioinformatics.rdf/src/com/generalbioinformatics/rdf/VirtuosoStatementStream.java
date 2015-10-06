@@ -12,6 +12,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.helixsoft.recordstream.AbstractStream;
 import nl.helixsoft.recordstream.IteratorHelper;
 import nl.helixsoft.recordstream.NextUntilNull;
@@ -26,6 +29,8 @@ import com.generalbioinformatics.rdf.stream.Statement;
  */
 public class VirtuosoStatementStream extends AbstractStream<Statement> implements NextUntilNull<Statement>
 {
+	Logger log = LoggerFactory.getLogger("com.generalbioinformatics.rdf.VirtuosoStatementStream");
+
 	private final ResultSet rs;
 	private boolean closed = false;
 	
@@ -172,10 +177,15 @@ public class VirtuosoStatementStream extends AbstractStream<Statement> implement
 		}
 	}
 
-	private void close() throws SQLException 
+	@Override
+	public void close() 
 	{
 		closed = true;
-		rs.close();
+		try {
+			rs.close();
+		} catch (SQLException e) {
+			log.warn ("Couldn't close ResultSet properly", e);
+		}
 	}
 	
 	@Override
@@ -186,7 +196,7 @@ public class VirtuosoStatementStream extends AbstractStream<Statement> implement
 		} 
 		catch (SQLException e) 
 		{
-			e.printStackTrace();
+			log.warn ("Couldn't close ResultSet properly", e);
 		}
 	}
 }

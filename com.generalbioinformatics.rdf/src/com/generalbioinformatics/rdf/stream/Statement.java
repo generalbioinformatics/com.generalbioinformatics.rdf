@@ -156,6 +156,17 @@ public final class Statement
 	 */
 	public void write (OutputStream os) throws IOException
 	{
+		write (os, false);
+	}
+	
+	/**
+	 * Write this triple to an outputstream, formatted exactly
+	 * according to N-Triple format.
+	 * @param escapeUnicode if true, higher unicode characters are escaped as \\uXXXX,
+	 * 		otherwise, higher unicode characters are written in UTF-8 encoding (as per N-Triple spec)
+	 */
+	public void write (OutputStream os, boolean escapeUnicode) throws IOException
+	{
 		// subject
 		if (sIsAnon)
 		{
@@ -178,7 +189,7 @@ public final class Statement
 		// object
 		if (fLiteral)
 		{
-			NtWriter.writeEscapedString(os, lit);
+			NtWriter.writeEscapedString(os, lit, escapeUnicode);
 			if (litType != null)
 			{
 				os.write ('^');

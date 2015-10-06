@@ -110,7 +110,7 @@ public class NtWriter
 			validateUri (st.getPredicateUri());
 			if (!st.isObjectAnon() && !st.isLiteral()) validateUri (st.getObjectUri());
 		}
-		st.write (os);
+		st.write (os, escapeUnicode);
 	}
 
 	public void writeStatement(Object s, Object p, Object o) throws IOException 
@@ -330,6 +330,7 @@ public class NtWriter
 	/**
 	 * If escapeUnicode is true, then codepoints above 127 will be esacped with \\u
 	 * If escapeUnicode is false, then codepoints above 127 will be encoded as UTF-8 format.
+	 * Default value is false.
 	 */
 	public void setEscapeUnicode(boolean value) 
 	{

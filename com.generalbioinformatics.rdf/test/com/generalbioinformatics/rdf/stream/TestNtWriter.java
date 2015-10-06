@@ -1,5 +1,6 @@
 package com.generalbioinformatics.rdf.stream;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.generalbioinformatics.rdf.NS;
@@ -167,6 +168,46 @@ public class TestNtWriter extends TestCase
 		assertEquals ("euro\\u20AC", NtWriter.escapeString("euro\u20AC", true));
 		assertEquals ("euro\u20AC", NtWriter.escapeString("euro\u20AC", false));
 		assertEquals ("single'double\\\"", NtWriter.escapeString("single'double\"", false));
+	}
+	
+	public void testEscapeUnicode() throws IOException
+	{
+		ByteArrayOutputStream baos;
+		NtWriter nt;
+		Statement st = new Statement();
+		st.setSubjectUri("http://example.com#subject");
+		st.setPredicateUri("http://example.com#predicate");
+		st.setLiteral("euro\u20AC");
+		
+		baos = new ByteArrayOutputStream();
+		nt = new NtWriter (baos);
+		// test default unicode escaping = false
+		nt.writeLiteral("http://example.com#subject", "http://example.com#predicate", "euro\u20AC");
+		nt.write(st);
+		
+		// NOTE single slash in \u20AC
+		assertEquals ("<http://example.com#subject> <http://example.com#predicate> \"euro\u20AC\" .\n"
+				+ "<http://example.com#subject> <http://example.com#predicate> \"euro\u20AC\" .\n", baos.toString());
+				
+		baos = new ByteArrayOutputStream();
+		nt = new NtWriter (baos);
+		nt.setEscapeUnicode(false); // test with unicode escaping off - same result as default
+		nt.writeLiteral("http://example.com#subject", "http://example.com#predicate", "euro\u20AC");
+		nt.write(st);
+		
+		// NOTE single slash in \u20AC
+		assertEquals ("<http://example.com#subject> <http://example.com#predicate> \"euro\u20AC\" .\n"
+				+ "<http://example.com#subject> <http://example.com#predicate> \"euro\u20AC\" .\n", baos.toString());
+		
+		baos = new ByteArrayOutputStream();
+		nt = new NtWriter (baos);
+		nt.setEscapeUnicode(true); // test with unicode escaping on
+		nt.writeLiteral("http://example.com#subject", "http://example.com#predicate", "euro\u20AC");
+		nt.write(st);
+		
+		// NOTE double slash in \\u20AC - slash itself is escaped
+		assertEquals ("<http://example.com#subject> <http://example.com#predicate> \"euro\\u20AC\" .\n"
+				+ "<http://example.com#subject> <http://example.com#predicate> \"euro\\u20AC\" .\n", baos.toString());
 	}
 	
 
