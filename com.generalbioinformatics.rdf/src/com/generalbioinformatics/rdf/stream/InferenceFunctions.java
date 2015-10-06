@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nl.helixsoft.recordstream.Function;
@@ -95,6 +96,63 @@ public abstract class InferenceFunctions
 	
 	}
 	
+	public static class UriReplace implements Function<Statement, Statement> 
+	{
+		private int count = 0;
+		private final Pattern pat;
+		private final String replacement;
+		
+		public int getCount() 
+		{ 
+			return count; 
+		}
+		
+		UriReplace (String pattern, String replacement)
+		{
+			this.pat = Pattern.compile(pattern);
+			this.replacement = replacement;
+		}
+
+		@Override
+		public Statement apply(Statement st)
+		{
+			boolean result = false;
+			
+			String s = st.getSubjectUri();
+			Matcher mats = pat.matcher(s);
+			if (mats.find())
+			{
+				s = mats.replaceFirst(replacement);
+				st.setSubjectUri(s);
+				result = true;
+			}
+			
+			String p = st.getPredicateUri();
+			Matcher matp = pat.matcher(p); 
+			if (matp.find())
+			{
+				p = matp.replaceFirst(replacement);
+				st.setPredicateUri(p);
+				result = true;
+			}
+
+			if (!(st.isLiteral() || st.isObjectAnon()))
+			{
+				String o = st.getObjectUri();
+				Matcher mato = pat.matcher(o); 
+				if (mato.find())
+				{
+					o = mato.replaceFirst(replacement);
+					st.setObjectUri(o);
+					result = true;
+				}
+			}
+
+			if (result) count++;
+			return st;
+		}
+	
+	}
 	/**
 	 * A predicate-predicate:
 	 * A predicate function (meaning a function that has a yes/no result) 
@@ -137,7 +195,7 @@ public abstract class InferenceFunctions
 		{
 			for (Pattern cpat : cpatterns)
 			{
-				if (cpat.matcher(s).matches())
+				if (cpat.matcher(s).find())
 				{
 					return true;
 				}
