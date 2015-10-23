@@ -185,11 +185,10 @@ public class RdfStream extends AbstractTripleStream
 						parseState = ParseState.PROPERTY;
 					} else if (parseState == ParseState.PROPERTY) {
 						result.setPredicateUri(uri);
-						String resourceUri = parser.getAttributeValue(
-								RDF_NS,
-								"resource");
-						if (resourceUri != null) {
-							result.setObjectUri(makeUriAbsolute(resourceUri));
+						RdfNode node = parseCurrentObject();
+					
+						if (node != null) {
+							result.setObject(node);
 							queue.add(result);
 							parseState = ParseState.NODE;
 						} else {
@@ -373,6 +372,36 @@ public class RdfStream extends AbstractTripleStream
 		}
 	}
 
+	private RdfNode parseCurrentObject() 
+	{
+		RdfNode node;
+
+		String uri = parser.getAttributeValue(
+				RDF_NS, "resource");
+		
+		if (uri == null)
+		{
+			String nodeId = parser.getAttributeValue(
+					RDF_NS, "nodeID");
+			if (nodeId != null)
+			{
+				nodeId = "_:" + nodeId;			
+				node = RdfNode.createAnon(nodeId);
+			}
+			else
+			{
+				node = null;
+			}
+		}
+		else
+		{
+			uri = makeUriAbsolute(uri);
+			node = RdfNode.createUri(uri);
+		}
+		
+		return node;
+	}
+	
 	private RdfNode parseCurrentNode() 
 	{
 		RdfNode node;
