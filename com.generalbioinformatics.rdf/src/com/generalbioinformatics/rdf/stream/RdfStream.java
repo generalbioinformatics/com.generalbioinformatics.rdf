@@ -23,6 +23,8 @@ import com.generalbioinformatics.rdf.stream.NtStream.ParseException;
  * This is supposed to read RDF files as a stream, similar to NtStream. However,
  * it's not yet finished. <br>
  * This implementation uses the Streaming API for XML (StAX).
+ * <p>
+ * Reference: http://www.w3.org/TR/REC-rdf-syntax/
  */
 public class RdfStream extends AbstractTripleStream 
 {
@@ -125,7 +127,7 @@ public class RdfStream extends AbstractTripleStream
 	}
 
 	private String currentLang = null;
-
+	
 	private class State {
 		public State(ParseState parseState) {
 			this.state = parseState;
@@ -209,9 +211,14 @@ public class RdfStream extends AbstractTripleStream
 								queue.add(result);
 								currentNode.push(RdfNode.createAnon(id));
 								parseState = ParseState.PROPERTY;
-							} else if ("Literal".equals(parseType)) {
-								throw new ParseException(
-										"parsetype Literal not yet implemented"); // TODO
+							} 
+							else if ("Literal".equals(parseType)) 
+							{								
+								String lit = getXmlFragment();
+								result.setLiteral(lit);
+								result.setLiteralType("http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral");
+								queue.add(result);
+								parseState = ParseState.NODE;
 							} else {
 								parseState = ParseState.NODE;
 							}
@@ -240,7 +247,7 @@ public class RdfStream extends AbstractTripleStream
 							result.setSubject(currentNode.lastElement());
 
 					}
-					parseState = stateStack.pop().state;
+					parseState = stateStack.pop().state;					
 					break;
 				}
 
@@ -250,6 +257,86 @@ public class RdfStream extends AbstractTripleStream
 		}
 	}
 
+	/** 
+	 * Attempt at implementing XMLLiterals.
+	 * This almost works, but in the end, there is no 100% reliable way to get the underlying XML data precisely.
+	 * <p>
+	 * So instead of doing something that works only 90% of the time, we just declare it unsupported. 
+	 *  
+	 */
+	private String getXmlFragment () throws XMLStreamException
+	{
+		throw new UnsupportedOperationException("parseType=Literal not supported");
+		/*
+		StringBuilder result = new StringBuilder();
+		boolean quit = false;
+		int stack = 0;
+		while(true)
+		{
+			int event;
+			event = parser.next();
+		
+			// parse until just before the next start / end event after stack reaches 0.
+			if(quit)
+			{
+				if (event == XMLStreamConstants.START_ELEMENT || event == XMLStreamConstants.END_ELEMENT)
+				{
+					break;
+				}			
+			}
+			
+			int namespaceCount = parser.getNamespaceCount();
+            System.out.println("Number of namespaces defined: " + namespaceCount);
+            
+			switch (event)
+			{
+			
+			case XMLStreamConstants.CHARACTERS: case XMLStreamConstants.CDATA: case XMLStreamConstants.COMMENT: case XMLStreamConstants.SPACE:
+				result.append(parser.getText());
+				break;
+			case XMLStreamConstants.NAMESPACE:
+				System.out.println("NAMESPACE");
+				break;
+			case XMLStreamConstants.ATTRIBUTE:
+				System.out.println("ATTRIBUTE");
+				break;
+			case XMLStreamConstants.START_ELEMENT:
+				result.append("<");
+				result.append(parser.getPrefix() + ":" + parser.getLocalName());
+				for (int i = 0; i < parser.getNamespaceCount(); ++i)
+				{
+					result.append(" ");
+					result.append(parser.getNamespacePrefix(i) + "=\"" + parser.getNamespaceURI(i) + "\"");					
+				}			
+				
+				for (int i = 0; i < parser.getAttributeCount(); ++i)
+				{
+					result.append(" ");
+					result.append(parser.getAttributeLocalName(i) + "=\"" + parser.getAttributeValue(i) + "\"");
+				}
+				
+				result.append(">");
+				
+				break;
+			case XMLStreamConstants.END_ELEMENT:
+				result.append("<" + parser.getPrefix() + ":" + parser.getLocalName() + "/>");
+			}
+			
+			if (event == XMLStreamConstants.START_ELEMENT)
+			{
+				stack++;
+			}
+			else if (event == XMLStreamConstants.END_ELEMENT)
+			{
+				stack--;
+				if (stack == 0) { quit = true; } // we've reached the end, parse until just before next START / END element. 
+			}
+		}
+		
+		return result.toString();
+		*/
+	}
+	
 	private void parseTypeTriple(String uri) {
 		if (!uri.equals(RDF_NS + "Description")) {
 			// emit an rdf:type triple.
@@ -323,7 +410,10 @@ public class RdfStream extends AbstractTripleStream
 
 	private String makeUriAbsolute(String uri) 
 	{
-		if (!uri.matches("^\\w+:/.*"))
+		// is it a relative or absolute URI?
+		// according to https://en.wikipedia.org/wiki/Uniform_Resource_Identifier,
+		// minimal requirement for absolute URI are "scheme:path"
+		if (!uri.matches("^[\\w+.-]+:.*"))
 		{
 			assert (xmlBase != null) : "Need default namespace, none provided.";
 			uri = xmlBase + uri;
