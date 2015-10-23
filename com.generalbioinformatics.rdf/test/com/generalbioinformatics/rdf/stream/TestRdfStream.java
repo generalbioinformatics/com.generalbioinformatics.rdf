@@ -130,7 +130,7 @@ public class TestRdfStream extends TestCase
 		for (Statement st : ts)
 		{
 			System.out.println (st);
-			assertTrue ("missing tripple: " + st, l.remove(st));
+			assertTrue ("missing triple: " + st, l.remove(st));
 		}
 		
 		assertEquals ("MISSING: " + l, 0, l.size());

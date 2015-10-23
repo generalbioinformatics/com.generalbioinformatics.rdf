@@ -181,17 +181,18 @@ public class RdfStream extends AbstractTripleStream
 						}
 						currentNode.push(node);
 						parseTypeTriple(uri);
-						parseLiteralPropertyAttributes();
+						parseLiteralPropertyAttributes(new Statement());
 						parseState = ParseState.PROPERTY;
 					} else if (parseState == ParseState.PROPERTY) {
 						result.setPredicateUri(uri);
-						RdfNode node = parseCurrentObject();
-					
+						parseLiteralPropertyAttributes(result);
+						RdfNode node = parseCurrentObject();					
 						if (node != null) {
 							result.setObject(node);
 							queue.add(result);
 							parseState = ParseState.NODE;
-						} else {
+						}
+						else {
 							String dataType = parser
 									.getAttributeValue(
 											RDF_NS,
@@ -352,7 +353,7 @@ public class RdfStream extends AbstractTripleStream
 	 * 
 	 * <xxx ns:predicate="literal"/>
 	 */
-	private void parseLiteralPropertyAttributes() {
+	private void parseLiteralPropertyAttributes(Statement result) {
 		// check for other attributes...
 		for (int i = 0; i < parser.getAttributeCount(); ++i) {
 			String ns = parser.getAttributeNamespace(i);
@@ -361,8 +362,18 @@ public class RdfStream extends AbstractTripleStream
 				String val = parser.getAttributeValue(i);
 				String key = parser.getAttributeLocalName(i);
 
-				Statement result = new Statement();
-				result.setSubject(currentNode.lastElement());
+				if (parseState == ParseState.NODE)
+				{
+					result.setSubject(currentNode.lastElement());
+				}
+				else
+				{
+					RdfNode node = RdfNode.createAnon(generateAnon());
+					result.setObject(node);
+					queue.add(result);
+					result = new Statement();
+					result.setSubject(node);
+				}
 				result.setPredicateUri(ns + key);
 				result.setLiteral(val);
 				if (currentLang != null)
