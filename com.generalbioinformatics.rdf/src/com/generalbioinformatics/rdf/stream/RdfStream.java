@@ -127,6 +127,7 @@ public class RdfStream extends AbstractTripleStream
 	}
 
 	private String currentLang = null;
+	private Integer rdfSequence = null;
 	
 	private class State {
 		public State(ParseState parseState) {
@@ -165,6 +166,7 @@ public class RdfStream extends AbstractTripleStream
 					if (lang != null) {
 						currentLang = lang; // TODO: put this on a stack
 					}
+					
 					String uri = parser.getName().getNamespaceURI()
 							+ parser.getName().getLocalPart();
 					if (parseState == ParseState.NODE) 
@@ -184,9 +186,17 @@ public class RdfStream extends AbstractTripleStream
 						parseLiteralPropertyAttributes(new Statement());
 						parseState = ParseState.PROPERTY;
 					} else if (parseState == ParseState.PROPERTY) {
-						result.setPredicateUri(uri);
+						if (uri.equals(RDF_NS + "li"))
+						{
+							result.setPredicateUri(RDF_NS + "_" + (rdfSequence++));
+						}
+						else
+						{
+							result.setPredicateUri(uri);
+							rdfSequence = null;
+						}
 						parseLiteralPropertyAttributes(result);
-						RdfNode node = parseCurrentObject();					
+						RdfNode node = parseCurrentObject();				
 						if (node != null) {
 							result.setObject(node);
 							queue.add(result);
@@ -345,6 +355,10 @@ public class RdfStream extends AbstractTripleStream
 			st.setPredicateUri(RDF_NS + "type");
 			st.setObjectUri(uri);
 			queue.add(st);
+		}
+		
+		if (uri.equals(RDF_NS + "Seq")) {
+			rdfSequence = 1;
 		}
 	}
 
