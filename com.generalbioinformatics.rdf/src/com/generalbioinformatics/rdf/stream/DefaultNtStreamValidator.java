@@ -44,7 +44,7 @@ public class DefaultNtStreamValidator implements NtStreamValidator
 
 	// more strict formatting for URIs
 	// maximum length accepted by virtuoso is ~1900 characters
-	private static Pattern strictValidUriPattern = Pattern.compile("^http://[^\\x00-\\x20>]+[/#][^\\x00-\\x20>]{1,1890}$");
+	private static Pattern strictValidUriPattern = Pattern.compile("^(DOI:|http://)[^\\x00-\\x20>]+[/#][^\\x00-\\x20>]{1,1890}$");
 
 	@Override
 	public void validateUri(String uri) 
