@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.generalbioinformatics.rdf.stream.RdfNode;
+
 import nl.helixsoft.recordstream.AbstractRecordStream;
 import nl.helixsoft.recordstream.DefaultRecord;
 import nl.helixsoft.recordstream.DefaultRecordMetaData;
@@ -63,8 +65,31 @@ public class VirtuosoRecordStream extends AbstractRecordStream
 			for (int col = 1; col <= rmd.getNumCols(); ++col)
 			{
 				Object o = rs.getObject(col);
+				Object result = o;
+				if (o instanceof VirtuosoExtendedString)
+				{
+					VirtuosoExtendedString vo = (VirtuosoExtendedString)o;
+					if (vo.getStrType() != 1)
+					{
+						result = vo.toString(); // literal String
+					}
+					else
+					{
+						switch (vo.getIriType())
+						{
+						case VirtuosoExtendedString.IRI: // normal
+							result = RdfNode.createUri(vo.toString());
+							break;
+						case VirtuosoExtendedString.BNODE: // anonymous
+							result = RdfNode.createAnon(vo.toString().replaceAll("nodeID://", ""));
+							break;
+						default:
+							throw new IllegalStateException("Unexpected iri type: " + vo.getIriType());
+						}
+					}
+				}
 				// get rid of VirtuosoExtendedString as it doesn't implement equals and HashCode properly
-				data[col-1] = (o instanceof VirtuosoExtendedString ? o.toString() : o);
+				data[col-1] = result;
 			}
 			return new DefaultRecord(rmd, data);
 		} catch (SQLException ex) {

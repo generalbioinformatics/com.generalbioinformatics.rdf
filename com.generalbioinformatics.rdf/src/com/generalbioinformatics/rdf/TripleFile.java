@@ -9,10 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import nl.helixsoft.recordstream.RecordStream;
-import nl.helixsoft.recordstream.StreamException;
-import nl.helixsoft.util.FileUtils;
-
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
@@ -22,6 +18,10 @@ import com.hp.hpl.jena.query.Syntax;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.shared.JenaException;
+
+import nl.helixsoft.recordstream.RecordStream;
+import nl.helixsoft.recordstream.StreamException;
+import nl.helixsoft.util.HFileUtils;
 
 /**
  * A triple store backed by a simple file in Rdf or TTL format, using Jena as intermediate.
@@ -45,7 +45,7 @@ public class TripleFile extends AbstractTripleStore
 			
 			for (File f : rdfFile)
 			{
-				InputStream fis = FileUtils.openZipStream(f); 
+				InputStream fis = HFileUtils.openZipStream(f); 
 				_model.read(fis, null, deduceLang(f));
 				fis.close();
 			}

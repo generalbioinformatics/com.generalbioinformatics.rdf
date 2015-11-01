@@ -14,6 +14,7 @@ import nl.helixsoft.recordstream.Record;
 import nl.helixsoft.recordstream.RecordMetaData;
 import nl.helixsoft.recordstream.StreamException;
 
+import com.generalbioinformatics.rdf.stream.RdfNode;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
@@ -88,9 +89,17 @@ public class JenaRecordStream extends AbstractRecordStream
 			{
 				fields[i] = node.asLiteral().getValue();
 			}
+			else if (node.isAnon())
+			{
+				fields[i] = RdfNode.createAnon(node.asResource().getId().getLabelString());
+			}
+			else if (node.isURIResource())
+			{
+				fields[i] = RdfNode.createUri(node.asResource().getURI());
+			}
 			else
 			{
-				fields[i] = node.asResource().toString();				
+				throw new IllegalStateException ("Inconsistent resource " + node);
 			}
 			i++;
 		}

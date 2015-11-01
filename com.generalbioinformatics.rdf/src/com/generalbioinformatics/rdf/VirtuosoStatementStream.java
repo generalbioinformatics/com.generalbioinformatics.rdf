@@ -81,7 +81,7 @@ public class VirtuosoStatementStream extends AbstractStream<Statement> implement
 			}
 			else
 			{
-				throw new IllegalStateException("Unexpected class: " + o.getClass());
+				throw new IllegalStateException("Unexpected class: " + s.getClass());
 			}
 			
 			// get rid of VirtuosoExtendedString as it doesn't implement equals and HashCode properly

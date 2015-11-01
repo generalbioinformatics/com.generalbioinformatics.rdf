@@ -4,6 +4,8 @@
 */
 package com.generalbioinformatics.rdf.stream;
 
+import nl.helixsoft.util.ObjectUtils;
+
 /**
  * Helper class for Statement. A statement does not use RdfNodes internally for speed reasons.
  */
@@ -12,7 +14,6 @@ public class RdfNode
 	private final boolean fAnon;
 	private final boolean fLiteral;
 	
-	// note that for anonymous nodes, the namespace _: is stored in data.
 	private final String data;
 
 	public boolean isAnon () { return fAnon; }
@@ -46,12 +47,37 @@ public class RdfNode
 		return new RdfNode (data, false, true);
 	}
 	
-	public String toString()
+	public String format()
 	{
 		if (fLiteral) return '"' + data + '"';
 		else if (fAnon) return "_:" + data;
 		else return '<' + data + '>';
 	}
 	
+	public String toString()
+	{
+		return data;
+	}
 	
+	@Override
+	public boolean equals(Object other) 
+	{
+		if (other == null) return false; 
+		if (this == other) return true;
+		if (other.getClass() != RdfNode.class) return false;
+		RdfNode that = (RdfNode)other;
+		
+		return 
+			ObjectUtils.safeEquals(this.data, that.data) &&
+			this.fLiteral == that.fLiteral &&
+			this.fAnon == that.fAnon;		
+	}
+
+	@Override
+	public int hashCode() 
+	{
+		return (fAnon ? 3 : -5) *
+				(fLiteral ? -17 : 13) *
+				(data == null ? 23 : 29 * data.hashCode());
+	}
 }
