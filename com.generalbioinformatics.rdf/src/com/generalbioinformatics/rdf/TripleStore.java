@@ -32,7 +32,14 @@ import nl.helixsoft.recordstream.StreamException;
  */
 public interface TripleStore 
 {
-	/** Uses caching if enabled via setCacheDir */ 
+	/** 
+	 * Attempts to hide underlying implementation differences as much as possible.
+	 * URIs and anonymous IDs will be returned as RdfNode
+	 * Literals will be returned as basic classes such as Long, Integer, Boolean, String.
+	 * Language information on strings is not returned.
+	 * <p>
+	 * Uses caching if enabled via setCacheDir 
+	 */ 
 	RecordStream sparqlSelect(String query) throws StreamException;
 	
 	/** Direct query without caching, for internal use */
@@ -40,7 +47,8 @@ public interface TripleStore
 
 	NamespaceMap getNamespaces();
 	
-	//TODO: RecordStreamException is not the appropriate exception type here.
+	//TODO: StreamException is not the appropriate exception type here.
+	//TODO: return results as Stream<Statement>
 	void sparqlConstruct(String query, OutputStream os) throws StreamException;
 	
 	/**

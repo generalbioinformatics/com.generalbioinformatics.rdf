@@ -76,8 +76,8 @@ public class RdfNode
 	@Override
 	public int hashCode() 
 	{
-		return (fAnon ? 3 : -5) *
-				(fLiteral ? -17 : 13) *
+		return (fAnon ? 3 : -5) +
+				(fLiteral ? -17 : 13) +
 				(data == null ? 23 : 29 * data.hashCode());
 	}
 }

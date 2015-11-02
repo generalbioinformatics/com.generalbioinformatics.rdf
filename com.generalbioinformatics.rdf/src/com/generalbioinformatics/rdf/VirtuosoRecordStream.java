@@ -18,6 +18,7 @@ import nl.helixsoft.recordstream.Record;
 import nl.helixsoft.recordstream.RecordMetaData;
 import nl.helixsoft.recordstream.StreamException;
 import virtuoso.jdbc3.VirtuosoExtendedString;
+import virtuoso.jdbc3.VirtuosoRdfBox;
 
 /**
  * TODO: this shares a lot of code with nl.helixsoft.recordstream.ResultSetRecordStream
@@ -62,6 +63,11 @@ public class VirtuosoRecordStream extends AbstractRecordStream
 			}
 			
 			Object[] data = new Object[rmd.getNumCols()];
+			
+			// attempt to replace Virtuoso-specific classes with generic classes as much as possible.
+			// to meet the contract of TripleStore.sparqlSelect.
+			// use RdfNode for URI's
+			// use Long, Int, Boolean, String, etc. for literal classes.
 			for (int col = 1; col <= rmd.getNumCols(); ++col)
 			{
 				Object o = rs.getObject(col);
@@ -87,6 +93,11 @@ public class VirtuosoRecordStream extends AbstractRecordStream
 							throw new IllegalStateException("Unexpected iri type: " + vo.getIriType());
 						}
 					}
+				}
+				else if (o instanceof VirtuosoRdfBox)
+				{
+					// language attribute and other type information will be lost this way.
+					result = ((VirtuosoRdfBox)o).rb_box;
 				}
 				// get rid of VirtuosoExtendedString as it doesn't implement equals and HashCode properly
 				data[col-1] = result;

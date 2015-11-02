@@ -50,7 +50,7 @@ public class TestVirtuosoRecordStream
 		
 		// test detection of anonymous nodes...
 		RecordStream rs = con.sparqlSelect(
-				"SELECT (1 as ?one) (\"hello\" as ?hello) (<http://example.org#uri> as ?uri) (\"3.14\"^^<http://www.w3.org/2001/XMLSchema#float> as ?pi)"
+				"SELECT (\"5000000000\"^^<http://www.w3.org/2001/XMLSchema#long> as ?long) (1 as ?one) (\"hello\" as ?hello) (<http://example.org#uri> as ?uri) (\"3.14\"^^<http://www.w3.org/2001/XMLSchema#float> as ?pi)"
 				+ "WHERE { }");
 		
 		Record r = rs.iterator().next();
@@ -68,7 +68,10 @@ public class TestVirtuosoRecordStream
 		
 		assertEquals (Short.class, r.get("one").getClass());
 		assertEquals ((short)1, r.get("one"));
-		
+
+		assertEquals (Long.class, r.get("long").getClass());
+		assertEquals (5000000000L, r.get("long"));
+
 		assertEquals (String.class, r.get("hello").getClass());
 		assertEquals ("hello", r.get("hello"));
 	}
