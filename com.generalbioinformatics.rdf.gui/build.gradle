@@ -12,7 +12,7 @@ dependencies {
 		"org.apache:commons-codec:1.5",
 		project (":com.generalbioinformatics.rdf")
 
-    testCompile group: 'junit', name: 'junit', version: '3.+'   
+    testCompile "junit:junit:4.+"   
 }
 
 sourceSets.main.java.srcDirs = ['src', 'src-generated']

@@ -15,7 +15,7 @@ dependencies {
 	
 	embed fileTree(dir: 'lib', include: '*.jar')
 		
-    testCompile group: 'junit', name: 'junit', version: '3.+'
+    testCompile "junit:junit:4.+"
 }
 
 jar {
