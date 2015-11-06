@@ -793,5 +793,11 @@ public class VirtuosoConnection extends AbstractTripleStore
 		}
 		return result;
 	}
-	
+
+	@Override
+	public Stream<com.generalbioinformatics.rdf.stream.Statement> sparqlConstruct(String query) throws StreamException 
+	{
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
 }

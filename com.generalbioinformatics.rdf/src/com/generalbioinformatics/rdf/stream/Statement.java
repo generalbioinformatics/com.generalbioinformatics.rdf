@@ -23,7 +23,7 @@ public final class Statement
 	private String sUri;
 	private boolean sIsAnon;
 	private String oUri;
-	private String lit; // parsed, unescaped literal
+	private Object lit; // parsed, unescaped literal
 	private String pUri;
 	private String litLang; // must be upper or lowercase letters with one dash. E.g. "en", "sp", "en-us". 
 	private String litType;
@@ -93,7 +93,7 @@ public final class Statement
 		this.oIsAnon = true;
 	}
 
-	public void setLiteral(String lit)
+	public void setLiteral(Object lit)
 	{
 		// TODO: type etc.
 		this.lit = lit;
@@ -131,7 +131,7 @@ public final class Statement
 		{
 			StringBuilder result = new StringBuilder();
 			result.append ("\"");
-			result.append (NtWriter.escapeString(lit, false));
+			result.append (NtWriter.escapeString(lit.toString(), false));
 			result.append ("\"");
 			if (litType != null)
 			{
@@ -189,7 +189,7 @@ public final class Statement
 		// object
 		if (fLiteral)
 		{
-			NtWriter.writeEscapedString(os, lit, escapeUnicode);
+			NtWriter.writeEscapedString(os, lit.toString(), escapeUnicode);
 			if (litType != null)
 			{
 				os.write ('^');
@@ -278,7 +278,7 @@ public final class Statement
 	/**
 	 * Returns the literal value, unescaped, without language & type parts.
 	 */
-	public String getLiteral() 
+	public Object getLiteral() 
 	{
 		return lit;
 	}

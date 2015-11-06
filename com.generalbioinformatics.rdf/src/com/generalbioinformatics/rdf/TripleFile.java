@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.generalbioinformatics.rdf.stream.Statement;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
@@ -20,6 +21,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.shared.JenaException;
 
 import nl.helixsoft.recordstream.RecordStream;
+import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.HFileUtils;
 
@@ -158,6 +160,13 @@ public class TripleFile extends AbstractTripleStore
 			throw new StreamException(ex);
 		}
 		
+	}
+
+
+	@Override
+	public Stream<Statement> sparqlConstruct(String query) throws StreamException 
+	{
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 	
 }

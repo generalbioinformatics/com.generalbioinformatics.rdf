@@ -7,7 +7,10 @@ package com.generalbioinformatics.rdf;
 import java.io.File;
 import java.io.OutputStream;
 
+import com.generalbioinformatics.rdf.stream.Statement;
+
 import nl.helixsoft.recordstream.RecordStream;
+import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
 
 /**
@@ -50,6 +53,8 @@ public interface TripleStore
 	//TODO: StreamException is not the appropriate exception type here.
 	//TODO: return results as Stream<Statement>
 	void sparqlConstruct(String query, OutputStream os) throws StreamException;
+	
+	Stream<Statement> sparqlConstruct(String query) throws StreamException;
 	
 	/**
 	 * Setting the caching dir to a non-null value enables caching for select queries. 

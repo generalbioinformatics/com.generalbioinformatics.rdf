@@ -5,13 +5,18 @@
 package com.generalbioinformatics.rdf;
 
 import java.io.OutputStream;
+import java.util.Iterator;
 
-import nl.helixsoft.recordstream.RecordStream;
-import nl.helixsoft.recordstream.StreamException;
-
+import com.generalbioinformatics.rdf.stream.Statement;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.sparql.engine.http.QueryEngineHTTP;
+
+import nl.helixsoft.recordstream.AbstractStream;
+import nl.helixsoft.recordstream.RecordStream;
+import nl.helixsoft.recordstream.Stream;
+import nl.helixsoft.recordstream.StreamException;
 
 /**
  * A {@link TripleStore} implementation for SPARQL endpoints,
@@ -90,4 +95,75 @@ public class JenaSparqlEndpoint extends AbstractTripleStore
 		return "JenaSparqlEndpoint(" + sparql + ")";
 	}
 
+	@Override
+	public Stream<Statement> sparqlConstruct(String query) throws StreamException 
+	{
+		Model model = sparqlConstructAsModel(query);
+		StmtIterator it = model.listStatements();
+		Stream<Statement> result = new JenaModelStream(it);
+				
+		return result;
+	}
+
+	private class JenaModelStream extends AbstractStream<Statement>
+	{
+		private final StmtIterator it;
+		
+		JenaModelStream (StmtIterator it)
+		{
+			this.it = it;
+		}
+
+		@Override
+		public Iterator<Statement> iterator() 
+		{
+			return new Iterator<Statement>()
+			{
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+
+				@Override
+				public Statement next() 
+				{
+					Statement result = new Statement();
+					com.hp.hpl.jena.rdf.model.Statement st = it.next();
+					
+					if (st.getSubject().isAnon())
+					{
+						result.setSubjectAnon(st.getSubject().getId().toString());
+					}
+					else
+					{
+						result.setSubjectUri(st.getSubject().getURI());
+					}
+					
+					result.setPredicateUri(st.getPredicate().getURI());
+					
+					if (st.getObject().isAnon())
+					{
+						result.setObjectAnon(st.getObject().asResource().getId().toString());
+					}
+					else if (st.getObject().isResource())
+					{
+						result.setObjectUri(st.getObject().asResource().getURI());
+					}
+					else
+					{
+						result.setLiteral(st.getLiteral().getValue());
+					}
+					
+					return result;
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException("Read-only iterator, remove not implemented");
+				}
+			};
+			
+			
+		}
+	}
 }
