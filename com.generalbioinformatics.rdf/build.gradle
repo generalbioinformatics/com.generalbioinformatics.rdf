@@ -6,16 +6,21 @@ configurations {
 
 dependencies {
 
-	provided "org.apache.jena:jena-all:2.+", // optional dependency
+	provided ("org.apache.jena:jena-arq:2.+", // optional dependency
 		"openrdf-sesame:openrdf-sesame-all:2.6.+" // optional dependency 
-
-	compile "org.apache:commons-io:1.4+",
+	)
+	
+	compile ("org.apache:commons-io:1.4+",
 		"nl.helixsoft:nl.helixsoft.util:1.0.1",
 		"com.springsource:com.springsource.org.jdom:1.1.0"
+	)
 	
 	embed fileTree(dir: 'lib', include: '*.jar')
 		
-    testCompile "junit:junit:4.+"
+    testCompile ("junit:junit:4.+",
+    	"org.apache.jena:jena-arq:2.+",
+    	"openrdf-sesame:openrdf-sesame-all:2.6.+"
+    )
 }
 
 jar {
