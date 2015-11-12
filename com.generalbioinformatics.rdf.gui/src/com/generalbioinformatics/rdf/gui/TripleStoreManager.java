@@ -26,6 +26,13 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 
+import org.pathvisio.gui.dialogs.OkCancelDialog;
+
+import com.generalbioinformatics.rdf.JenaSparqlEndpoint;
+import com.generalbioinformatics.rdf.TripleFile;
+import com.generalbioinformatics.rdf.TripleStore;
+import com.generalbioinformatics.rdf.VirtuosoConnection;
+
 import nl.helixsoft.debug.WorkerThread;
 import nl.helixsoft.gui.IndeterminateProgressDialog;
 import nl.helixsoft.gui.preferences.PreferenceManager;
@@ -34,19 +41,13 @@ import nl.helixsoft.param.ParameterPanel;
 import nl.helixsoft.param.SimpleParameterModel;
 import nl.helixsoft.param.StringEditor;
 import nl.helixsoft.recordstream.StreamException;
-
-import org.pathvisio.gui.dialogs.OkCancelDialog;
-
-import com.generalbioinformatics.rdf.JenaSparqlEndpoint;
-import com.generalbioinformatics.rdf.TripleFile;
-import com.generalbioinformatics.rdf.TripleStore;
-import com.generalbioinformatics.rdf.VirtuosoConnection;
+import nl.helixsoft.recordstream.Supplier;
 
 /**
  * Manages a connection to a Triple Store or SPARQL endpoint, or anything that can handle SPARQL queries. 
  * Handles configuring via GUI, and testing connection.
  */
-public class TripleStoreManager 
+public class TripleStoreManager implements Supplier<TripleStore>
 {
 	private TripleStore con = null;
 	private final PreferenceManager prefs;
@@ -462,6 +463,12 @@ public class TripleStoreManager
 			ConfigureDialog dlg = new ConfigureDialog();
 			dlg.setVisible(true);
 		}
+	}
+
+	@Override
+	public TripleStore get() 
+	{
+		return getConnection();
 	}
 
 }

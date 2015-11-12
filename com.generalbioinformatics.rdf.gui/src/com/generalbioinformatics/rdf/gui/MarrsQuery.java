@@ -17,6 +17,8 @@ public class MarrsQuery implements RowWithProperties<MarrsColumn>
 {
 	private String q;
 	private String title;
+	private String testKey;
+	private String testValue;
 	private QueryType qt;
 	private String askBefore = null;
 	private Map<String, String> contextTypes = new HashMap<String, String>();
@@ -126,4 +128,24 @@ public class MarrsQuery implements RowWithProperties<MarrsColumn>
 	{
 		return postProcess.get(var);
 	}
+
+	/** NOTE: Incubating */
+	public void setTestParam(String key, String val) 
+	{
+		testKey = key;
+		testValue = val;
+	}
+	
+	/** NOTE: Incubating */
+	public String getTestKey() 
+	{
+		return testKey;
+	}
+	
+	/** NOTE: Incubating */
+	public String getTestValue() 
+	{
+		return testValue;
+	}
+
 }

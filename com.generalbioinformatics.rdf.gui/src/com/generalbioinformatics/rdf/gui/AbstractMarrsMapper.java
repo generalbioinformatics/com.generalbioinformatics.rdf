@@ -15,17 +15,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
-import nl.helixsoft.gui.IndeterminateProgressDialog;
-import nl.helixsoft.recordstream.Record;
-import nl.helixsoft.recordstream.RecordStream;
-import nl.helixsoft.recordstream.RecordStreamFormatter;
-import nl.helixsoft.recordstream.StreamException;
-
 import org.pathvisio.gui.dialogs.OkCancelDialog;
 
 import com.generalbioinformatics.rdf.NS;
 import com.generalbioinformatics.rdf.NamespaceMap;
 import com.generalbioinformatics.rdf.TripleStore;
+
+import nl.helixsoft.gui.IndeterminateProgressDialog;
+import nl.helixsoft.recordstream.Record;
+import nl.helixsoft.recordstream.RecordStream;
+import nl.helixsoft.recordstream.RecordStreamFormatter;
+import nl.helixsoft.recordstream.StreamException;
+import nl.helixsoft.recordstream.Supplier;
 
 /**
  * Contains functionality common between cytoscape 2 and cytoscape 3 versions of the
@@ -36,10 +37,10 @@ import com.generalbioinformatics.rdf.TripleStore;
  */
 public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMapper 
 {
-	protected final TripleStoreManager conMgr;
+	protected final Supplier<TripleStore> conMgr;
 	private NamespaceMap namespaces = new NS();
 
-	protected AbstractMarrsMapper (TripleStoreManager conMgr)
+	protected AbstractMarrsMapper (Supplier<TripleStore> conMgr)
 	{
 		this.conMgr = conMgr;
 	}
@@ -48,7 +49,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	public final int popupResults(String query) throws StreamException 
 	{
 		// TODO: wrap in swing worker.
-		RecordStream rs = conMgr.getConnection().sparqlSelect(query);
+		RecordStream rs = conMgr.get().sparqlSelect(query);
 
 		TableModel tm = RecordStreamFormatter.asTableModel(rs);
 		int result = tm.getRowCount();
@@ -110,7 +111,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 			}
 			else
 			{
-				setEdgeAttribute(edge, key, r.get(i));
+				setEdgeAttribute(edge, key, "" + r.get(i));
 			}
 		}
 	}
@@ -137,7 +138,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	@Override
 	public final int addAttributes(String query) throws StreamException
 	{			
-		TripleStore con = conMgr.getConnection();
+		TripleStore con = conMgr.get();
 		if (con == null) return -1; // already showed error dialog at this point.
 
 		QuerySwingWorker worker = new QuerySwingWorker(con, query)
@@ -165,6 +166,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 					catch (IllegalArgumentException ex)
 					{
 						JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
+						ex.printStackTrace();
 						this.cancel(true);
 					}
 				}
@@ -205,7 +207,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	@Override
 	public final int createNetwork(String query, final MarrsQuery mq) throws StreamException 
 	{
-		TripleStore con = conMgr.getConnection();
+		TripleStore con = conMgr.get();
 		if (con == null) return -1; // already showed error dialog at this point.
 
 		QuerySwingWorker worker = new QuerySwingWorker(con, query)
@@ -242,6 +244,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 				catch (IllegalArgumentException ex)
 				{
 					JOptionPane.showMessageDialog(getFrame(), "Error in query: " + ex.getMessage());
+					ex.printStackTrace();
 					this.cancel(true);
 				}
 			}
@@ -280,7 +283,7 @@ public abstract class AbstractMarrsMapper<NodeType, EdgeType> implements MarrsMa
 	@Override
 	public final int addAttributesMatrix(String query) throws StreamException
 	{
-		TripleStore con = conMgr.getConnection();
+		TripleStore con = conMgr.get();
 		if (con == null) return -1; // already showed error dialog at this point.
 
 		QuerySwingWorker worker = new QuerySwingWorker(con, query)

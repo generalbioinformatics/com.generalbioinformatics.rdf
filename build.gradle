@@ -1,4 +1,4 @@
-def localRepo = 'file://' + new File(System.getProperty('user.home'), 'prg/bundle-repository2').absolutePath
+def localRepo = 'file://' + new File(System.getProperty('user.home'), 'prg/bundle-repository').absolutePath
 
 def githash = "git log -1 --format='%H'".execute().in.readLines()[0];
 def builddate = new Date().format("yyyyMMdd")
@@ -51,16 +51,7 @@ subprojects {
 		}
 	
 		repositories {
-			add project.repositories.local_bundle_repository
-			
-			ivy {
-				name "old_local_bundle_repository"
-				url 'file://' + new File(System.getProperty('user.home'), 'prg/bundle-repository').absolutePath
-				layout "pattern", {
-				    ivy "[module]-[revision]-ivy.xml"
-				    artifact "[artifact]-[revision].[ext]"
-				}
-			}
+			add project.repositories.local_bundle_repository			
 		}
 	}
 

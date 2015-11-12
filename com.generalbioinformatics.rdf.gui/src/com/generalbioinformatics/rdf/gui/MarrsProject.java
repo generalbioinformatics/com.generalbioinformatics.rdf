@@ -296,6 +296,18 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 				if (val != null)
 					q.putContext(key, val);
 			}
+			
+			for (Object test : eQuery.getChildren("Test"))
+			{
+				Element eTest = (Element)test;
+				String key = eTest.getAttributeValue("key");
+				String val = eTest.getAttributeValue("value");
+				
+				if (val != null)
+				{
+					q.setTestParam(key, val);
+				}
+			}
 
 			Object ask = eQuery.getChild("AskBefore");
 			if (ask != null)
