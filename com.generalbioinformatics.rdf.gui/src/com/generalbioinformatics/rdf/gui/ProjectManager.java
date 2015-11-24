@@ -23,15 +23,17 @@ import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.apache.commons.codec.binary.Base64;
+import org.jdom.JDOMException;
+import org.xml.sax.InputSource;
+
+import com.generalbioinformatics.rdf.gui.ProjectDlg.QueryStatus;
+
 import nl.helixsoft.gui.DownloadUtils;
 import nl.helixsoft.gui.preferences.PreferenceManager;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.FileUtils;
 import nl.helixsoft.util.StringUtils;
-
-import org.apache.commons.codec.binary.Base64;
-import org.jdom.JDOMException;
-import org.xml.sax.InputSource;
 
 /**
  * Manages loading and saving of a project, and also the list of most recently used project files.
@@ -381,14 +383,16 @@ public class ProjectManager
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			//TODO: wrap in swingworker
 			try
 			{
-				int count = 0;
-				count += ProjectDlg.run(mapper, project, frame, conMgr, row);
+				QueryStatus result = ProjectDlg.run(mapper, project, frame, conMgr, row);
 				
-				if (count == 0)
+				// user pressed cancel.
+				if (result.userCancelled) return; 
+				
+				if (result.resultNum == 0)
 				{
+					// give some feedback so the user knows something happened even if no new nodes appear.
 					JOptionPane.showMessageDialog(frame, "Query returned 0 results");
 				}
 			}

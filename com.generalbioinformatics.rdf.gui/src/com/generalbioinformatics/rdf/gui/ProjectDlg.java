@@ -130,7 +130,7 @@ public class ProjectDlg extends OkCancelDialog
 		ProjectDlg.editParam (model, frame, key);
 	}
 	
-	public static void editParam (MarrsProject model, Frame frame, String key)
+	public static boolean editParam (MarrsProject model, Frame frame, String key)
 	{
 		OkCancelDialog dlg = new OkCancelDialog(frame, "Search results", frame, true);
 		JTextArea txt = new JTextArea(10, 40);
@@ -142,7 +142,12 @@ public class ProjectDlg extends OkCancelDialog
 		if (dlg.getExitCode().equals(OkCancelDialog.OK))
 		{
 			String p1 = txt.getText().replaceAll ("\n", ", ");
-			model.setQueryParameter(key, p1);				
+			model.setQueryParameter(key, p1);
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 	}
 	
@@ -177,20 +182,20 @@ public class ProjectDlg extends OkCancelDialog
 		@Override
 		public void actionPerformed(ActionEvent e) 
 		{
-			//TODO: wrap in swingworker
 			try
 			{
 				int count = 0;
 				if (all)
 				{
-					count = runAll();
+					// create an array containing all indexes from 0 .. model.getRowCount()
+					int[] all = new int[model.getRowCount()];					
+					for (int i = 0; i < model.getRowCount(); ++i) { all[i] = i; }
+					
+					count = runMany(all);
 				}
 				else
 				{
-					for (int row : table.getSelectedRows())
-					{
-						count += run(row);
-					}
+					count = runMany (table.getSelectedRows());
 				}
 				
 				if (count == 0)
@@ -213,14 +218,22 @@ public class ProjectDlg extends OkCancelDialog
 
 	/** run a single query 
 	 * @throws MarrsException */
-	public int run(int i) throws StreamException, MarrsException 
+	public QueryStatus run(int i) throws StreamException, MarrsException 
 	{
 		return ProjectDlg.run (mapper, model, frame, conMgr, i);
 	}
 	
+	public static class QueryStatus
+	{
+		public boolean userCancelled = false;
+		public int resultNum = 0;		
+		public static QueryStatus cancelled() { QueryStatus result = new QueryStatus(); result.userCancelled = true; return result; }
+		public static QueryStatus withResultNum(int value) { QueryStatus result = new QueryStatus(); result.resultNum = value; return result; }
+	}
+	
 	/** run a single query 
 	 * @throws MarrsException */
-	public static int run(MarrsMapper mapper, MarrsProject model, Frame frame, TripleStoreManager conMgr, int i) throws StreamException, MarrsException 
+	public static QueryStatus run(MarrsMapper mapper, MarrsProject model, Frame frame, TripleStoreManager conMgr, int i) throws StreamException, MarrsException 
 	{
 		int result = 0;
 		if (i < 0 || i > model.getRowCount()) throw new ArrayIndexOutOfBoundsException("Can't run query " + i);
@@ -228,13 +241,17 @@ public class ProjectDlg extends OkCancelDialog
 		String key = model.getRow(i).getAskBefore();
 		if (key != null)
 		{
-			ProjectDlg.editParam(model, frame, key);
+			boolean okPressed = ProjectDlg.editParam(model, frame, key);
+			if (!okPressed)
+			{
+				return QueryStatus.cancelled();
+			}
 		}
 		
 		String q = model.getSubstitutedQuery(i);
 		MarrsQuery mq = model.getQuery(i);
 		result = doQuery(mapper, q, mq);
-		return result;
+		return QueryStatus.withResultNum(result);
 	}
 
 	public static int doQuery(MarrsMapper mapper, String q,
@@ -273,13 +290,23 @@ public class ProjectDlg extends OkCancelDialog
 	 * Run all node and backbone queries, but not search queries.
 	 * @throws MarrsException 
 	 */
-	public int runAll() throws StreamException, MarrsException
+	public int runMany(int[] rows) throws StreamException, MarrsException
 	{
 		int count = 0;
-		for (int i = 0; i < model.getRowCount(); ++i)
+		for (int i : rows)
 		{
 			if (model.getRow(i).getQueryType() != QueryType.QUERY_SEARCH)
-				count += run(i);
+			{
+				QueryStatus qs = run(i);
+				if (qs.userCancelled)
+				{
+					break;
+				}
+				else
+				{
+					count += qs.resultNum;
+				}
+			}
 		}
 		return count;
 	}
