@@ -44,8 +44,12 @@ public class ProjectManager
 	private final TripleStoreManager conMgr;
 	private final MarrsMapper mapper;
 	private final Frame frame;
+	
+	// recent items can grow from 0 up to MarrsPreference.RECENT_FILE_NUM
 	private final List<RecentItem> recentItems;
-	public final List<AbstractAction> recentActions;
+	
+	// always a fixed number of recent actions
+	public final AbstractAction[] recentActions = new AbstractAction[MarrsPreference.RECENT_FILE_NUM];
 	
 	private static class RecentItem
 	{
@@ -74,6 +78,7 @@ public class ProjectManager
 		
 		public RecentFileAction(int i) 
 		{
+			// placeholder values ... will be updated in refreshRecentFilesMenu
 			super (i + " - ");
 			this.no = i;
 		}
@@ -109,16 +114,22 @@ public class ProjectManager
 		updateActions();
 		
 		recentItems = new ArrayList<RecentItem>();
-		recentActions = new ArrayList<AbstractAction>();
+
+		// initialise five menu actions
+		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
+		{
+			AbstractAction action = new RecentFileAction(i);
+			recentActions[i] = action;
+		}
 		
+		// initialise recentItems from preferences
 		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
 		{
 			File f = prefs.getFile(MarrsPreference.RECENT_FILE_ARRAY[i]);
+			
 			String title = prefs.get(MarrsPreference.RECENT_FILE_TITLE_ARRAY[i]);
 			RecentItem item = new RecentItem(f, title);
 			recentItems.add (item);
-			AbstractAction action = new RecentFileAction(i);
-			recentActions.add (action);
 		}
 		
 		refreshRecentFilesMenu();		
@@ -128,15 +139,26 @@ public class ProjectManager
 	{
 		for (int i = 0; i < MarrsPreference.RECENT_FILE_NUM; ++i)
 		{
-			AbstractAction act = recentActions.get(i);
+			AbstractAction act = recentActions[i];
 			RecentItem item = (i >= recentItems.size()) ? null : recentItems.get(i);
-			act.setEnabled(item.file != null);
-			String menuTitle = i + (item.file == null ? "" : (" - " + item.file.getName()));
-			
-			if (!StringUtils.emptyOrNull(item.title))
-				menuTitle += " - " + item.title;
-			
-			act.putValue(Action.NAME, menuTitle);
+			if (item == null || item.file == null)
+			{
+				act.setEnabled(false);
+				String menuTitle = i + "";
+				act.putValue(Action.NAME, menuTitle);
+				act.putValue(Action.SHORT_DESCRIPTION, null);
+			}
+			else
+			{
+				act.setEnabled(true);
+				String menuTitle = i + " - " + item.file.getName();
+				
+				if (!StringUtils.emptyOrNull(item.title))
+					menuTitle += " - " + item.title;
+				
+				act.putValue(Action.NAME, menuTitle);
+				act.putValue(Action.SHORT_DESCRIPTION, item.file.getAbsolutePath());
+			}
 		}
 	}
 	
@@ -158,12 +180,12 @@ public class ProjectManager
 		InputStream is = new FileInputStream(projectFile);
 		loadProject (is);
 		
-		// remove all occurrences of this file and reinsert at the top
+		// remove all occurrences of this file so it can be reinsert at the top
 		Iterator<RecentItem> it = recentItems.iterator();
 		while (it.hasNext())
 		{
 			RecentItem i = it.next();
-			if (i.file == projectFile)
+			if (i.file == null || i.file.getAbsoluteFile().equals(projectFile.getAbsoluteFile()))
 			{
 				it.remove();
 			}

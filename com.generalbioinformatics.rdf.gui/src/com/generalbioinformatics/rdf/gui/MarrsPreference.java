@@ -32,15 +32,15 @@ public enum MarrsPreference implements Preference
 	MARRS_SPARQL_AUTHENTICATE("" + false),
 	
 	/** Most recently used project location */
-	MARRS_RECENT_1(""),
+	MARRS_RECENT_1(null),
 	MARRS_RECENT_1_TITLE(""),
-	MARRS_RECENT_2(""),
+	MARRS_RECENT_2(null),
 	MARRS_RECENT_2_TITLE(""),
-	MARRS_RECENT_3(""),
+	MARRS_RECENT_3(null),
 	MARRS_RECENT_3_TITLE(""),
-	MARRS_RECENT_4(""),
+	MARRS_RECENT_4(null),
 	MARRS_RECENT_4_TITLE(""),
-	MARRS_RECENT_5(""), 
+	MARRS_RECENT_5(null), 
 	MARRS_RECENT_5_TITLE(""), 
 	
 	/** Classpath location where the vizmap properties can be found */
