@@ -132,7 +132,7 @@ public class ProjectDlg extends OkCancelDialog
 	
 	public static boolean editParam (MarrsProject model, Frame frame, String key)
 	{
-		OkCancelDialog dlg = new OkCancelDialog(frame, "Search results", frame, true);
+		OkCancelDialog dlg = new OkCancelDialog(frame, "Please enter " + key, frame, true);
 		JTextArea txt = new JTextArea(10, 40);
 		txt.setText (model.getQueryParameter(key));
 		dlg.setDialogComponent(txt);
@@ -220,7 +220,7 @@ public class ProjectDlg extends OkCancelDialog
 	 * @throws MarrsException */
 	public QueryStatus run(int i) throws StreamException, MarrsException 
 	{
-		return ProjectDlg.run (mapper, model, frame, conMgr, i);
+		return ProjectDlg.run (mapper, model, frame, i);
 	}
 	
 	public static class QueryStatus
@@ -233,12 +233,21 @@ public class ProjectDlg extends OkCancelDialog
 	
 	/** run a single query 
 	 * @throws MarrsException */
-	public static QueryStatus run(MarrsMapper mapper, MarrsProject model, Frame frame, TripleStoreManager conMgr, int i) throws StreamException, MarrsException 
+	public static QueryStatus run(MarrsMapper mapper, MarrsProject model, Frame frame, int i) throws StreamException, MarrsException 
 	{
-		int result = 0;
 		if (i < 0 || i > model.getRowCount()) throw new ArrayIndexOutOfBoundsException("Can't run query " + i);
 		
-		String key = model.getRow(i).getAskBefore();
+		MarrsQuery mq = model.getQuery(i);		
+		return run(mapper, model, frame, mq);
+	}
+
+	/** run a single query 
+	 * @throws MarrsException */
+	public static QueryStatus run(MarrsMapper mapper, MarrsProject model, Frame frame, MarrsQuery mq) throws StreamException, MarrsException 
+	{
+		int result = 0;
+		
+		String key = mq.getAskBefore();
 		if (key != null)
 		{
 			boolean okPressed = ProjectDlg.editParam(model, frame, key);
@@ -248,12 +257,11 @@ public class ProjectDlg extends OkCancelDialog
 			}
 		}
 		
-		String q = model.getSubstitutedQuery(i);
-		MarrsQuery mq = model.getQuery(i);
+		String q = model.getSubstitutedQuery(mq);		
 		result = doQuery(mapper, q, mq);
 		return QueryStatus.withResultNum(result);
 	}
-
+	
 	public static int doQuery(MarrsMapper mapper, String q,
 			MarrsQuery mq) throws StreamException 
 	{

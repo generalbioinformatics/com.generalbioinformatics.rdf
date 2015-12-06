@@ -407,7 +407,7 @@ public class ProjectManager
 		{
 			try
 			{
-				QueryStatus result = ProjectDlg.run(mapper, project, frame, conMgr, row);
+				QueryStatus result = ProjectDlg.run(mapper, project, frame, row);
 				
 				// user pressed cancel.
 				if (result.userCancelled) return; 
