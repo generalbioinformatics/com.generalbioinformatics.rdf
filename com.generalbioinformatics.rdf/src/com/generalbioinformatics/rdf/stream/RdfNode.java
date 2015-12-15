@@ -80,4 +80,15 @@ public class RdfNode
 				(fLiteral ? -17 : 13) +
 				(data == null ? 23 : 29 * data.hashCode());
 	}
+	
+	/**
+	 * Backwards compatibility hack:
+	 * support groovy notation like 
+	 * 
+	 * 		r.get("s") - "http://identifiers.org/" 
+	 */
+	public String minus (String o)
+	{
+		return toString().replaceFirst(o, "");
+	}
 }
