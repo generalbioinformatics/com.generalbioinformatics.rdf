@@ -270,6 +270,7 @@ public class NtWriter
 			}	
 			validateUri (s);
 			validateUri (p);
+			validateLiteral (o);
 		}
 		
 		stmtCount++;

@@ -4,12 +4,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.generalbioinformatics.rdf.NS;
 
 import nl.helixsoft.util.StringUtils;
 
 public class DefaultNtStreamValidator implements NtStreamValidator
 {
+	Logger log = LoggerFactory.getLogger("com.generalbioinformatics.rdf.stream.DefaultNtStreamValidator");
 
 	@Override
 	public void validateLiteral(Object s, Object p, Object o) 
@@ -65,10 +69,15 @@ public class DefaultNtStreamValidator implements NtStreamValidator
 			if (os.equals ("null")) 
 				throw new RuntimeException ("Literal Fails strict validation: '" + os + "'");
 			
+			if (os.startsWith("\"") || os.endsWith("\""))
+			{
+				log.warn("Warning: literal triple contains quotes at start or end: '" + os + "'");;
+			}
+			
 			// TODO: method for collecting warnings...
 			if (os.startsWith ("http://"))
 			{
-				System.err.println ("Warning: literal triple looks like URI: '" + os + "'");
+				log.warn("Warning: literal triple looks like URI: '" + os + "'");
 			}
 		}
 	}
