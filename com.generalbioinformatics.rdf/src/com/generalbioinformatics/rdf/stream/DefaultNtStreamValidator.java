@@ -4,17 +4,22 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.generalbioinformatics.rdf.NS;
 
 import nl.helixsoft.util.StringUtils;
 
-public class DefaultNtStreamValidator implements NtStreamValidator
+public class DefaultNtStreamValidator extends AbstractNtStreamValidator
 {
-	Logger log = LoggerFactory.getLogger("com.generalbioinformatics.rdf.stream.DefaultNtStreamValidator");
-
+	public enum Rule { LITERAL_EMPTY_STRING, LITERAL_NULL, LITERAL_START_OR_END_QUOTE, LITERAL_LOOKS_LIKE_URI };
+	
+	{
+		// default rule settings
+		ruleConfig.put(Rule.LITERAL_EMPTY_STRING, Level.ERROR);
+		ruleConfig.put(Rule.LITERAL_NULL, Level.ERROR);
+		ruleConfig.put(Rule.LITERAL_START_OR_END_QUOTE, Level.WARN);
+		ruleConfig.put(Rule.LITERAL_LOOKS_LIKE_URI, Level.WARN);
+	}
+	
 	@Override
 	public void validateLiteral(Object s, Object p, Object o) 
 	{
@@ -59,26 +64,27 @@ public class DefaultNtStreamValidator implements NtStreamValidator
 		}
 		
 	}
-
+	
 	@Override
 	public void validateLiteral(Object o) 
 	{
 		if (o instanceof String)
 		{
 			String os = (String)o;
-			if (os.equals ("null")) 
-				throw new RuntimeException ("Literal Fails strict validation: '" + os + "'");
+
+			applyRule (os.equals ("null"), 
+					Rule.LITERAL_NULL, "Literal Fails strict validation: '" + os + "'");
 			
-			if (os.startsWith("\"") || os.endsWith("\""))
-			{
-				log.warn("Warning: literal triple contains quotes at start or end: '" + os + "'");;
-			}
+			applyRule (os.equals(""), 
+					Rule.LITERAL_EMPTY_STRING, "Literal triple contains empty string: '" + os + "'");
 			
-			// TODO: method for collecting warnings...
-			if (os.startsWith ("http://"))
-			{
-				log.warn("Warning: literal triple looks like URI: '" + os + "'");
-			}
+			applyRule (os.startsWith("\"") || os.endsWith("\""), 
+					Rule.LITERAL_START_OR_END_QUOTE, "Literal triple contains quotes at start or end: '" + os + "'");
+			
+			applyRule (os.startsWith ("http://"), 
+					Rule.LITERAL_LOOKS_LIKE_URI, "Literal triple looks like URI: '" + os + "'");
+			
 		}
 	}
+
 }

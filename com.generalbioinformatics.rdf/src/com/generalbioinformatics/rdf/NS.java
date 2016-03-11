@@ -38,6 +38,7 @@ public class NS extends SimpleNamespaceMap
 	
 	public static String idDbSnp = "http://identifiers.org/dbsnp/";
 	public static String idDictybaseGene = "http://identifiers.org/dictybase.gene/";
+	public static String idDoid = "http://identifiers.org/doid/";
 	public static String idDrugbank = "http://identifiers.org/drugbank/";
 	public static String idDrugbankTarget = "http://identifiers.org/drugbank.target/";
 	
@@ -78,7 +79,7 @@ public class NS extends SimpleNamespaceMap
 	@Deprecated /** use idMgd */
 	public static String idMgi = "http://identifiers.org/mgd/";
 	public static String idMgd = "http://identifiers.org/mgd/";
-	
+	public static String idMeddra = "http://identifiers.org/meddra/";
 	public static String idMiriam = "http://identifiers.org/miriam.collection/";
 	
 	public static String idNdc = "http://identifiers.org/ndc/";

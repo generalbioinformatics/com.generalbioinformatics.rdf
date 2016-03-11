@@ -360,7 +360,7 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 		if (warnings.size() > 0)
 		{
 			//TODO: set dialog root
-			JOptionPane.showMessageDialog(null, "<html><ul><li>" + StringUtils.join("<br/><li>", warnings) + "</ul></html>");
+			JOptionPane.showMessageDialog(null, "<html><ul><li>" + HStringUtils.join("<br/><li>", warnings) + "</ul></html>");
 		}
 
 		return project;
