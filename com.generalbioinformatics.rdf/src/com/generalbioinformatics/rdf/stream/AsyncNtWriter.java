@@ -7,6 +7,7 @@ package com.generalbioinformatics.rdf.stream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -31,6 +32,8 @@ public class AsyncNtWriter
 	{	
 		private final OutputStream os;
 		private final NtWriter nt;
+		private boolean done = false;
+		private Throwable exception = null;
 		
 		WriterThread(OutputStream os)
 		{
@@ -54,14 +57,14 @@ public class AsyncNtWriter
 					}
 				}
 			}
-			catch (InterruptedException ignored)
+			catch (Throwable t)
 			{
-				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace(); 
+				exception = t;
+				t.printStackTrace(); 
 			}
+			
 			finally {
+				done = true;
 				try {
 					os.close();
 				} catch (IOException e) {
@@ -101,17 +104,18 @@ public class AsyncNtWriter
 		this.queue = new LinkedBlockingQueue<Object[]>(CAPACITY);
 	}
 
-	public void flush() throws IOException, InterruptedException
+	public void flush() throws IOException, InterruptedException, ExecutionException
 	{
 		//TODO... does this work?
-		while (!queue.isEmpty())
+		while (!(writer.done || queue.isEmpty()))
 		{
 			Thread.sleep(50);
 		}
+		if (writer.exception != null) throw new ExecutionException(writer.exception);
 		writer.flush();
 	}
 
-	public void waitAndClose() throws IOException, InterruptedException
+	public void waitAndClose() throws IOException, InterruptedException, ExecutionException
 	{
 		flush();
 		writer.close();
