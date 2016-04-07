@@ -96,7 +96,8 @@ public class NS extends SimpleNamespaceMap
 	public static String idPantherPathway = "http://identifiers.org/panther.pathway/";
 	public static String idPharmgkbDisease = "http://identifiers.org/pharmgkb.disease/";
 	public static String idPharmgkbDrug = "http://identifiers.org/pharmgkb.drug/";
-	public static String idPharmgkbPathway = "http://identifiers.org/pharmgkb.pathway/";
+	public static String idPharmgkbPathway = "http://identifiers.org/pharmgkb.pathways/";
+ 	public static String idPharmgkbGene = "http://identifiers.org/pharmgkb.gene/";
 	public static String idPirsf = "http://identifiers.org/pirsf/";
 	public static String idProsite = "http://identifiers.org/prosite/";
 	public static String idPubchemCompound = "http://identifiers.org/pubchem.compound/";
