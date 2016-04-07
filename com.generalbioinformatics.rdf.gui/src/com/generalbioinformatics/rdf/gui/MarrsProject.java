@@ -20,6 +20,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import nl.helixsoft.gui.table.MapTableModel;
+import nl.helixsoft.util.HStringUtils;
 import nl.helixsoft.util.StringUtils;
 
 import org.jdom.CDATA;
@@ -197,6 +198,15 @@ public class MarrsProject extends ListWithPropertiesTableModel<MarrsColumn, Marr
 			else if ("literal".equals (filter))
 			{
 				Pattern pat = Pattern.compile ("^[^\"\\n]*$");
+				Matcher mat = pat.matcher(contents);
+				if (!mat.matches())
+				{
+					throw new MarrsException("'" + contents + "' does not match pattern for parameter ${" + key + "|" + filter + "}");
+				}
+			}
+			else if ("literal-list".equals (filter))
+			{
+				Pattern pat = Pattern.compile ("^\\s*\"[^\"\\n]*\"(\\s*,\\s*\"[^\"\\n]*\")*\\s*$");
 				Matcher mat = pat.matcher(contents);
 				if (!mat.matches())
 				{
