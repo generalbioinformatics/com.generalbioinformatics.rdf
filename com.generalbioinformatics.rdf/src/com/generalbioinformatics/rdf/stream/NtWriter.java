@@ -43,7 +43,7 @@ import nl.helixsoft.util.DebugUtils;
  * Primarily used for formatting Sparql query results. This is a stream-based
  * writer that does not need to have all data in memory at once.
  */
-public class NtWriter 
+public class NtWriter implements INtWriter 
 {	
 	private final OutputStream os;
 	private static final String CHARSET = "UTF-8"; // NT is always in UTF-8 (even on windows), in accordance with N-triple specs. 
@@ -59,6 +59,7 @@ public class NtWriter
 		this.os = os;
 	}
 
+	@Override
 	public void flush() throws IOException
 	{
 		os.flush();
@@ -113,6 +114,7 @@ public class NtWriter
 		st.write (os, escapeUnicode);
 	}
 
+	@Override
 	public void writeStatement(Object s, Object p, Object o) throws IOException 
 	{
 		stmtCount++;
@@ -243,6 +245,7 @@ public class NtWriter
 		}
 	}
 	
+	@Override
 	public void writeLiteral(Object s, Object p, Object o) throws IOException 
 	{
 		if (validate)

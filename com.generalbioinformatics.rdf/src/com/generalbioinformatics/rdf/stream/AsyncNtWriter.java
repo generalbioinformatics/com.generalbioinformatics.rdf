@@ -17,15 +17,17 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <p>
  * Still in testing phase, use at your own risk.
  */
-public class AsyncNtWriter 
+public class AsyncNtWriter implements INtWriter
 {	
 	private final BlockingQueue<Object[]> queue;
 	
 	private final WriterThread writer;
 	
+	@Deprecated
+	/** NO-OP, gets started automatically */
 	public void start()
 	{
-		writer.start();	
+		
 	}
 	
 	private class WriterThread extends Thread 
@@ -102,8 +104,10 @@ public class AsyncNtWriter
 	{
 		this.writer = new WriterThread (os);
 		this.queue = new LinkedBlockingQueue<Object[]>(CAPACITY);
+		writer.start();
 	}
 
+	@Override
 	public void flush() throws IOException, InterruptedException, ExecutionException
 	{
 		//TODO... does this work?
@@ -135,9 +139,14 @@ public class AsyncNtWriter
 	}
 */
 	
-	public void writeStatement(Object s, Object p, Object o) throws IOException, InterruptedException 
+	@Override
+	public void writeStatement(Object s, Object p, Object o) throws IOException 
 	{
-		queue.put(new Object[] { Boolean.FALSE, s, p, o });
+		try {
+			queue.put(new Object[] { Boolean.FALSE, s, p, o });
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 	
 	/*
@@ -178,9 +187,14 @@ public class AsyncNtWriter
 
 	*/
 	
-	public void writeLiteral(Object s, Object p, Object o) throws IOException, InterruptedException 
+	@Override
+	public void writeLiteral(Object s, Object p, Object o) throws IOException 
 	{
-		queue.put(new Object[] { Boolean.TRUE, s, p, o });
+		try {
+			queue.put(new Object[] { Boolean.TRUE, s, p, o });
+		} catch (InterruptedException e) {
+			throw new IOException(e);
+		}
 	}
 
 	/*
