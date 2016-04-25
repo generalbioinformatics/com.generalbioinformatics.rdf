@@ -91,6 +91,11 @@ public class TripleFile extends AbstractTripleStore
 		rdfFile = aRdfFile;
 	}
 
+	public TripleFile (Model model) throws IOException
+	{
+		_model = model;
+	}
+
 	//TODO: move to utility class?
 	public static String deduceLang(File aRdfFile) 
 	{
