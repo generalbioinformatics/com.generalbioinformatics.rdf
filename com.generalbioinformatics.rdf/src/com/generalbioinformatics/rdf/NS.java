@@ -27,6 +27,7 @@ public class NS extends SimpleNamespaceMap
 	public static String idBindingDB = "http://identifiers.org/bindingDB/";
 	public static String idBiocyc = "http://identifiers.org/biocyc/";
 	
+ 	public static String idCandida = "http://identifiers.org/cgd/";
 	public static String idCas = "http://identifiers.org/cas/";
 	public static String idCathSuperfamily = "http://identifiers.org/cath.superfamily/";
 	public static String idCcds = "http://identifiers.org/ccds/";
@@ -49,7 +50,7 @@ public class NS extends SimpleNamespaceMap
 	public static String idEnsemblBacteria = "http://identifiers.org/ensembl.bacteria/";
 	public static String idEnsemblFungi = "http://identifiers.org/ensembl.fungi/";
 	public static String idEnsemblPlant = "http://identifiers.org/ensembl.plant/";
-	public static String idEnsemblProtists = "http://identifiers.org/ensemblprotists/";
+	public static String idEnsemblProtists = "http://identifiers.org/ensembl.protist/";
 	public static String idEnsemblMetazoa = "http://identifiers.org/ensembl.metazoa/";
 
 	public static String idFlybase = "http://identifiers.org/flybase/";
