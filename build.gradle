@@ -1,4 +1,5 @@
-def localRepo = 'file://' + new File(System.getProperty('user.home'), 'prg/bundle-repository').absolutePath
+def localRepo = project.hasProperty('localbundles') ? project['localbundles'] : 
+	'file://' + new File(System.getProperty('user.home'), 'prg/bundle-repository').absolutePath
 
 def githash = "git log -1 --format='%H'".execute().in.readLines()[0];
 def builddate = new Date().format("yyyyMMdd")
