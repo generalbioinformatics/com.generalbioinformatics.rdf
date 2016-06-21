@@ -66,7 +66,7 @@ public class ProjectManager
 	// project may be null
 	private MarrsProject project = null;
 	
-	/** @returns current project, null if there is no current project */ 
+	/** @return current project, null if there is no current project */ 
 	public MarrsProject getProject()
 	{
 		return project;
