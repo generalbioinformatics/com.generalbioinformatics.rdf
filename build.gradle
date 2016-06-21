@@ -7,6 +7,7 @@ def builddate = new Date().format("yyyyMMdd")
 allprojects {
 	apply plugin: 'java'
 	apply plugin: 'ivy-publish'
+	apply plugin: 'eclipse'
 
 	group = 'com.generalbioinformatics'
 	version = '1.0-SNAPSHOT'
@@ -57,4 +58,9 @@ subprojects {
 		}
 	}
 
+}
+
+task docs(type: Javadoc) {
+    source subprojects*.javadoc*.source
+	classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath}) 
 }
