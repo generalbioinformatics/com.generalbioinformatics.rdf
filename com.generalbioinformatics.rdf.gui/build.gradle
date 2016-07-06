@@ -1,14 +1,19 @@
 
+configurations {
+	provided
+}
 
 dependencies {
 
+	provided ("org.apache.jena:jena-arq:2.+") // optional dependency
+		
 	compile "nl.helixsoft:nl.helixsoft.util:1.0.1",
 		"nl.helixsoft:nl.helixsoft.gui:1.0.1",
-		"nl.helixsoft:nl.helixsoft.bridgedb.bio:1.+",
+		"nl.helixsoft:nl.helixsoft.bridgedb.bio:2.+",
 		"jsyntaxpane:jsyntaxpane:0.9.5.+",
 		"org.kohsuke:org.kohsuke.args4j:2.0+",
 		"com.springsource:com.springsource.org.jdom:1.1.0",
-		"org.bridgedb:org.bridgedb:1+",
+		"org.bridgedb:org.bridgedb:2+",
 		"org.apache:commons-codec:1.5",
 		project (":com.generalbioinformatics.rdf")
 
@@ -16,3 +21,4 @@ dependencies {
 }
 
 sourceSets.main.java.srcDirs = ['src', 'src-generated']
+sourceSets.main.compileClasspath += configurations.provided
