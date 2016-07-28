@@ -12,6 +12,7 @@ import com.generalbioinformatics.rdf.stream.Statement;
 import nl.helixsoft.recordstream.RecordStream;
 import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
+import nl.helixsoft.stats.DataFrame;
 
 /**
  * A triple store is an abstraction layer that wraps various ways of accessing a triple store.
@@ -62,6 +63,11 @@ public interface TripleStore
 	 */
 	void setCacheDir(File dir);
 	
+	/** Add a listener that will receive TripleStore events (e.g. when a query is returned) from this TripleStore */
 	void addListener(TripleStoreListener l);
+	/** Remove a previously registered listener */
 	void removeListener (TripleStoreListener l);
+
+	/** Same as sparqlSelect, but loads all results into memory at once and returns a DataFrame instead of a RecordStream */
+	DataFrame sparqlSelectDF(String query) throws StreamException;
 }

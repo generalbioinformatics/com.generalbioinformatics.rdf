@@ -16,6 +16,8 @@ import java.util.zip.GZIPOutputStream;
 import nl.helixsoft.recordstream.RecordStream;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.recordstream.TsvRecordStream;
+import nl.helixsoft.stats.DataFrame;
+import nl.helixsoft.stats.DataFrameOperation;
 import nl.helixsoft.util.FileUtils;
 
 /**
@@ -30,6 +32,12 @@ public abstract class AbstractTripleStore implements TripleStore
 	@Override public void setCacheDir (File dir)
 	{
 		this.cacheDir = dir;
+	}
+	
+	@Override
+	public DataFrame sparqlSelectDF(String query) throws StreamException
+	{
+		return DataFrameOperation.createFromRecordStream(sparqlSelect(query));
 	}
 	
 	public RecordStream sparqlSelect(String query) throws StreamException
