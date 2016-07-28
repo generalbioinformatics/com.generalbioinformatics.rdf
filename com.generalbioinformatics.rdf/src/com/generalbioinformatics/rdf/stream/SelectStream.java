@@ -7,7 +7,7 @@ package com.generalbioinformatics.rdf.stream;
 import java.io.IOException;
 
 /**
- * This class selects certain triples out of a parent stream, like a 'grep' for tripples. 
+ * This class selects certain triples out of a parent stream, like a 'grep' for triples. 
  * It passes through only triples from the parent stream that match certain criteria.
  */
 public class SelectStream extends AbstractTripleStream

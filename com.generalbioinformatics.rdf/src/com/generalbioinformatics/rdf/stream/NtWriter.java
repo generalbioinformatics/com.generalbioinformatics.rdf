@@ -332,8 +332,13 @@ public class NtWriter implements INtWriter
 	}
 
 	/**
-	 * If escapeUnicode is true, then codepoints above 127 will be esacped with \\u
+	 * If escapeUnicode is true, then codepoints above 127 will be escaped with \\u
 	 * If escapeUnicode is false, then codepoints above 127 will be encoded as UTF-8 format.
+	 * <p>
+	 * Both are valid according to n-triple spec, but some tools can only handle one of the two properly,
+	 * so sometimes there is a reason to prefer one format over the other. 
+	 * (e.g rapper doesn't handle utf-8, and it's difficult to convert utf-8 to \\u escaped data with PHP...)  
+	 * <p>
 	 * Default value is false.
 	 */
 	public void setEscapeUnicode(boolean value) 

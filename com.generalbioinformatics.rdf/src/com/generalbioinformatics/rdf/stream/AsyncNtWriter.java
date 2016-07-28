@@ -11,30 +11,40 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Experimental wrapper for NtWriter that offloads writes to a separate thread.
+ * Wrapper for NtWriter that offloads writes to a separate thread.
  * Results in massive speedup due to utilising two processors instead of one, and reduced IO blocking.
  * (Measured 6x speed-up in some situations)
  * <p>
- * Still in testing phase, use at your own risk.
+ * This class has been tested enough to be reasonably confident, nevertheless,
+ * be cautious when using this, double-check the output and when in doubt, switch to a regular NtWriter.
  */
 public class AsyncNtWriter implements INtWriter
 {	
+	/** 
+	 * each element in our queue is a 4-object array
+	 * object[0] is a message from the Message enum
+	 * objects[1..3] make up the triple.
+	*/
 	private final BlockingQueue<Object[]> queue;
+	enum Message { LITERAL, STATEMENT, EOF };
 	
 	private final WriterThread writer;
+	private boolean started = false;
 	
 	@Deprecated
 	/** NO-OP, gets started automatically */
 	public void start()
-	{
-		
+	{		
 	}
 	
+	
+	/** Separate thread that consumes items from our blockingQueue and writes them out 
+	 * (using an ordinary NtWriter internally) 
+	 */
 	private class WriterThread extends Thread 
 	{	
 		private final OutputStream os;
 		private final NtWriter nt;
-		private boolean done = false;
 		private Throwable exception = null;
 		
 		WriterThread(OutputStream os)
@@ -42,213 +52,130 @@ public class AsyncNtWriter implements INtWriter
 			this.os = os;
 			this.nt = new NtWriter(os);
 		}
-		
+
+		/** adjust validator of the wrapped NtWriter */
+		public synchronized void setValidator (NtStreamValidator validator)
+		{
+			nt.setValidator(validator);
+		}
+
+		/** avoid using... leaks internal object from different thread */
+		public synchronized NtStreamValidator getValidator ()
+		{
+			return nt.getValidator();
+		}
+
 		public void run() 
 		{
+			boolean done = false;
 			try {
-				while (true)
+				// main loop continues until we encounter an EOF message, a.k.a. 'poison pill'
+				while (!done)
 				{
 					Object[] data = queue.take();
-					if (data[0] == Boolean.TRUE)
+					switch ((Message)data[0])
 					{
+					case LITERAL:
 						nt.writeLiteral(data[1], data[2], data[3]);
-					}
-					else
-					{
+						break;
+					case STATEMENT:
 						nt.writeStatement(data[1], data[2], data[3]);
+						break;
+					case EOF:
+						done = true;
+						break;
 					}
 				}
 			}
+			// keep track of any exceptions that occurred during writing
 			catch (Throwable t)
 			{
 				exception = t;
 				t.printStackTrace(); 
 			}
 			
+			// clean up
 			finally {
-				done = true;
 				try {
+					os.flush();
 					os.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		}
 		
-		public void flush() throws IOException
-		{
-			//TODO: can this be exposed?
-			os.flush();
-		}
-
-		public void close() throws IOException
-		{
-			//TODO: can this be exposed?
-			os.close();
-		}
-		
 	}
-	
-//	private static final String CHARSET = "UTF-8"; // NT is always in UTF-8 (even on windows), in accordance with N-triple specs. 
-	
-//	private boolean validate = true; // perform validation checks before writing
-//	private NtStreamValidator strictValidator = new DefaultNtStreamValidator(); // perform a level of validation that is more strict than just the bare minimum defined by RDF 
-//	private boolean escapeUnicode = false;
-	
-//	private long stmtCount = 0;
 	
 	private final int CAPACITY = 10000;
 	
+	/** 
+	 * An NtWriter that handles write operations on a separate thread,
+	 * leading to better usage of system resources and better throughput
+	 * compared to a regular NtWriter.
+	 */
 	public AsyncNtWriter (OutputStream os)
 	{
-		this.writer = new WriterThread (os);
+		this.writer = new WriterThread(os);
 		this.queue = new LinkedBlockingQueue<Object[]>(CAPACITY);
-		writer.start();
+	}
+	
+	/** 
+	 * start our thread if not already started. This is called whenever we post something on the queue, to make
+	 * sure that the consumer is actually processing the queue.
+	 */
+	private void startThreadIfNecessary()
+	{
+		if (!started)
+		{
+			writer.start();
+			started = true;
+		}
 	}
 
 	@Override
 	public void flush() throws IOException, InterruptedException, ExecutionException
 	{
-		//TODO... does this work?
-		while (!(writer.done || queue.isEmpty()))
-		{
-			Thread.sleep(50);
-		}
+		// if we haven't started yet, we don't have to write anything
+		if (!started) return;
+		
+		// otherwise, send poison pill and wait for child thread to complete
+		queue.put(new Object[] { Message.EOF });
+		writer.join();
+		
+		// if there was any exception in the child thread, re-throw
 		if (writer.exception != null) throw new ExecutionException(writer.exception);
-		writer.flush();
 	}
-
-	public void waitAndClose() throws IOException, InterruptedException, ExecutionException
-	{
-		flush();
-		writer.close();
-	}
-	
-/*
-	public void write(Statement st) throws IOException 
-	{
-		stmtCount++;
-		if (validate)
-		{
-			if (!st.isSubjectAnon()) { validateUri (st.getSubjectUri()); }
-			validateUri (st.getPredicateUri());
-			if (!st.isObjectAnon() && !st.isLiteral()) validateUri (st.getObjectUri());
-		}
-		st.write (os, escapeUnicode);
-	}
-*/
 	
 	@Override
 	public void writeStatement(Object s, Object p, Object o) throws IOException 
 	{
 		try {
-			queue.put(new Object[] { Boolean.FALSE, s, p, o });
+			startThreadIfNecessary();
+			queue.put(new Object[] { Message.STATEMENT, s, p, o });
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}
 	}
-	
-	/*
-	
-	public void writeStatement(String s, String p, String o) throws IOException 
-	{
-		if (validate)
-		{
-			if (strictValidator != null)
-			{
-				strictValidator.validateStatement(s, p, o);
-			}
-			validateUri (s);
-			validateUri (p);
-			validateUri (o);
-		}
 		
-		stmtCount++;
-		writeResource (s);
-		os.write (' ');
-		writeResource (p);
-		os.write (' ');
-		writeResource (o);
-		os.write (' ');
-		os.write ('.');
-		os.write ('\n');
-	}
-
-	static Map<Class<?>, String> rdfTypes = new HashMap<Class<?>, String>();
-	static {
-		rdfTypes.put (Boolean.class, "boolean");
-		rdfTypes.put (Integer.class, "int");
-		rdfTypes.put (Double.class, "double");
-		rdfTypes.put (Float.class, "float");
-		rdfTypes.put (Date.class, "date");
-		rdfTypes.put (Long.class, "long");
-	}
-
-	*/
-	
 	@Override
 	public void writeLiteral(Object s, Object p, Object o) throws IOException 
 	{
 		try {
-			queue.put(new Object[] { Boolean.TRUE, s, p, o });
+			startThreadIfNecessary();
+			queue.put(new Object[] { Message.LITERAL, s, p, o });
 		} catch (InterruptedException e) {
 			throw new IOException(e);
 		}
 	}
-
-	/*
-	public void writeLiteral(String s, String p, Object o) throws IOException 
-	{
-		if (validate)
-		{
-			if (strictValidator != null)
-			{
-				strictValidator.validateLiteral(s, p, o);
-			}	
-			validateUri (s);
-			validateUri (p);
-		}
-		
-		stmtCount++;
-		AsyncNtWriter.writeLiteral(os, s, p, o, escapeUnicode);
-	}
-*/
 	
-//	/** returns the number of statements (literal and non-literal) */
-//	public long getStatementCount()
-//	{
-//		return stmtCount;
-//	}
-		
-	/**
-	 * If escapeUnicode is true, then codepoints above 127 will be esacped with \\u
-	 * If escapeUnicode is false, then codepoints above 127 will be encoded as UTF-8 format.
-	 * Default value is false.
-	 */
-//	public void setEscapeUnicode(boolean value) 
-//	{
-//		escapeUnicode = value;
-//	}
-	
-//	public void setStrictValidation(boolean value) 
-//	{
-//		if (value)
-//		{
-//			strictValidator = new DefaultNtStreamValidator();
-//			validate = true;
-//		}
-//		else
-//		{
-//			strictValidator = null;
-//		}
-//		
-//	}
-
+	/** avoid using. 
+	 * This will leak a Validator object that lives on a different thread, and
+	 * is not thread-safe to use. */
+	@Deprecated
 	public NtStreamValidator getValidator() 
 	{ 
-		//TODO: must be synchronized
-		return writer.nt.getValidator(); 
+		return writer.getValidator(); 
 	}
 
 	/**
@@ -257,8 +184,12 @@ public class AsyncNtWriter implements INtWriter
 	 */
 	public void setValidator(NtStreamValidator value) 
 	{ 
-		//TODO: must be synchronized		
-		writer.nt.setValidator(value);
+		writer.setValidator(value);
+	}
+
+	/** package private, for unit testing only */
+	Thread _getWriterThread() {
+		return writer;
 	}
 
 }
