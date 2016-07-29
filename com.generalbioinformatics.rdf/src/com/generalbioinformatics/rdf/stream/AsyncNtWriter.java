@@ -7,8 +7,10 @@ package com.generalbioinformatics.rdf.stream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wrapper for NtWriter that offloads writes to a separate thread.
@@ -20,6 +22,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class AsyncNtWriter implements INtWriter
 {	
+	Logger log = LoggerFactory.getLogger("com.generalbioinformatics.rdf.stream.AsyncNtWriter");
+
 	/** 
 	 * each element in our queue is a 4-object array
 	 * object[0] is a message from the Message enum
@@ -88,6 +92,7 @@ public class AsyncNtWriter implements INtWriter
 				}
 			}
 			// keep track of any exceptions that occurred during writing
+			// when an exception occurs, we stop processing, so it's important to check frequently for exceptions while filling the queue.
 			catch (Throwable t)
 			{
 				exception = t;
@@ -103,6 +108,18 @@ public class AsyncNtWriter implements INtWriter
 					e.printStackTrace();
 				}
 			}
+		}
+
+		/** return true if an exception occurred during processing */
+		public synchronized boolean hasException() 
+		{
+			return exception != null;
+		}
+
+		/** return exception that occurred during processing, or null if there hasn't been any (yet) */
+		public synchronized Throwable getException() 
+		{
+			return exception;
 		}
 		
 	}
@@ -128,13 +145,14 @@ public class AsyncNtWriter implements INtWriter
 	{
 		if (!started)
 		{
+			log.debug("Starting work thread: " + writer);
 			writer.start();
 			started = true;
 		}
 	}
 
 	@Override
-	public void flush() throws IOException, InterruptedException, ExecutionException
+	public void flush() throws IOException, InterruptedException
 	{
 		// if we haven't started yet, we don't have to write anything
 		if (!started) return;
@@ -142,9 +160,10 @@ public class AsyncNtWriter implements INtWriter
 		// otherwise, send poison pill and wait for child thread to complete
 		queue.put(new Object[] { Message.EOF });
 		writer.join();
+		log.debug("Work thread stopped: " + writer);
 		
 		// if there was any exception in the child thread, re-throw
-		if (writer.exception != null) throw new ExecutionException(writer.exception);
+		if (writer.hasException()) throw new IOException(writer.getException());
 	}
 	
 	@Override
@@ -152,6 +171,10 @@ public class AsyncNtWriter implements INtWriter
 	{
 		try {
 			startThreadIfNecessary();
+			
+			// if there was any exception in the child thread, re-throw. queue won't get processed anymore
+			if (writer.hasException()) throw new IOException(writer.getException());
+			
 			queue.put(new Object[] { Message.STATEMENT, s, p, o });
 		} catch (InterruptedException e) {
 			throw new IOException(e);
@@ -163,6 +186,10 @@ public class AsyncNtWriter implements INtWriter
 	{
 		try {
 			startThreadIfNecessary();
+			
+			// if there was any exception in the child thread, re-throw. queue won't get processed anymore
+			if (writer.hasException()) throw new IOException(writer.getException());
+
 			queue.put(new Object[] { Message.LITERAL, s, p, o });
 		} catch (InterruptedException e) {
 			throw new IOException(e);
