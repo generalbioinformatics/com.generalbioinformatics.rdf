@@ -60,7 +60,10 @@ subprojects {
 
 }
 
+// we need the modified classpath setting from the subproject before creating the docs task
+evaluationDependsOn(':com.generalbioinformatics.rdf')
+
 task docs(type: Javadoc) {
     source subprojects*.javadoc*.source
-	classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath}) 
+	classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
 }
