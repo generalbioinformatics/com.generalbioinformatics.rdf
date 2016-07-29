@@ -29,8 +29,8 @@ import nl.helixsoft.stats.DataFrame;
  * A few known implementations:
  * <ul>
  * <li>a local RDF file through Jena
- * <li>Virtuoso using JDBC driver -> this works directly on virtuoso, only way to get more than 10000 results on a default installation.
- * <li>Sparql endpoint through Jena -> also works on virtuoso, but can have issues.
+ * <li>Virtuoso using JDBC driver: this works directly on virtuoso, only way to get more than 10000 results on a default installation.
+ * <li>Sparql endpoint through Jena: also works on virtuoso, but can have issues.
  * <li>OpenRdf / Sesame
  * </ul>
  */

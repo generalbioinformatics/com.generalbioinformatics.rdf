@@ -30,7 +30,7 @@ public class MarrsQuery implements RowWithProperties<MarrsColumn>
 		/** The results of the query are displayed in a pop-up window */
 		QUERY_SEARCH,  
 		
-		/** The query must have src & dest (and optional edge) bindings. The results are used to build a network */
+		/** The query must have src and dest (and optional edge) bindings. The results are used to build a network */
 		QUERY_BACKBONE, 
 		
 		/** The query must have src bindings. The remaining columns are used as node attributes.

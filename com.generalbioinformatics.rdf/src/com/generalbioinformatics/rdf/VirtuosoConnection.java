@@ -119,23 +119,27 @@ public class VirtuosoConnection extends AbstractTripleStore
 	private String port;
 	private String pass;
 	
+	/** set the host of the virtuoso server, for example 'localhost' (default)*/
 	public void setHost (String val) { host = val; }
+	/** set the port of the virtuoso server, for example: 1111 (default) */
 	public void setPort (String val) { port = val; }
+	/** set the user for the connection with virtuoso, for example 'dba' (default) */
 	public void setUser (String val) { user = val; }
+	/** set the password for the virtuoso server connection */
 	public void setPass (String val) { pass = val; }
 	
 	public void setTempDir (File val) { tempDir = val; }
 	
+	/** get the current virtuoso server host */
 	public String getHost() { return host; }
+	/** get the current virtuoso server port */
 	public String getPort() { return port; }
 
 	/**
-	 * @throws IOException  
 	 * Set up the connection.
 	 * If the database parameters haven't been provided using setHost, setPort, etc,
 	 * it will depend on the database parameters provided in connection.properties
 	 * @throws IOException if the connection properties couldn't be loaded
-	 * @throws 
 	 */
 	public void init() throws SQLException, IOException
 	{
@@ -269,9 +273,6 @@ public class VirtuosoConnection extends AbstractTripleStore
 	
 	/** 
 	 * rename a graph from one graph URI to the other. 
-	 * @throws IOException 
-	 * @throws ClassNotFoundException 
-	 * 
 	 **/
 	public void renameGraph (String oldName, String newName) throws SQLException, IOException
 	{
@@ -413,9 +414,6 @@ public class VirtuosoConnection extends AbstractTripleStore
 	 * Load in RDF data from file.
 	 * @param f file to load. Type is recognized based on file extension
 	 * @param graphUri name of graph to load into.
-	 * @throws SQLException
-	 * @throws IOException
-	 * @throws ClassNotFoundException 
 	 */
 	public void vload(File f, String graphUri) throws SQLException, IOException
 	{
@@ -678,8 +676,6 @@ public class VirtuosoConnection extends AbstractTripleStore
 
 	/**
 	 * Virtuoso can process raw sql queries
-	 * @throws SQLException 
-	 * @throws IOException 
 	 */
 	public boolean rawSql(String string) throws SQLException, IOException 
 	{

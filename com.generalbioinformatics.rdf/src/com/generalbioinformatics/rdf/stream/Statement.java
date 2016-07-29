@@ -237,7 +237,7 @@ public final class Statement
 	}
 
 	/**
-	 * @returns the predicate as URI.
+	 * @return the predicate as URI.
 	 */
 	public String getPredicateUri() 
 	{
@@ -245,7 +245,7 @@ public final class Statement
 	}
 
 	/**
-	 * @returns the URI of the object part of the triple, or null if this is a Literal statement.
+	 * @return the URI of the object part of the triple, or null if this is a Literal statement.
 	 */
 	public String getObjectUri() 
 	{
@@ -253,7 +253,7 @@ public final class Statement
 	}
 	
 	/**
-	 * @returns true if the object is anonymous, i.e. it's a reference to a blank node.
+	 * @return true if the object is anonymous, i.e. it's a reference to a blank node.
 	 */
 	public boolean isObjectAnon()
 	{
@@ -276,7 +276,7 @@ public final class Statement
 	}
 
 	/**
-	 * Returns the literal value, unescaped, without language & type parts.
+	 * Returns the literal value, unescaped, without language nor type parts.
 	 */
 	public Object getLiteral() 
 	{

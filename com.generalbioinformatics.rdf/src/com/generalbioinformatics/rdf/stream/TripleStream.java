@@ -19,7 +19,7 @@ public interface TripleStream extends Stream<Statement>
 {
 	/**
 	 * Parse the next triple in the stream.
-	 * @returns the next triple, null if the end of the stream has been reached.
+	 * @return the next triple, null if the end of the stream has been reached.
 	 */
 	public Statement getNext() throws IOException, ParseException;
 	
