@@ -18,7 +18,7 @@ import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.recordstream.TsvRecordStream;
 import nl.helixsoft.stats.DataFrame;
 import nl.helixsoft.stats.DataFrameOperation;
-import nl.helixsoft.util.FileUtils;
+import nl.helixsoft.util.HFileUtils;
 
 /**
  * An abstract base class for TripleStores, 
@@ -102,7 +102,7 @@ public abstract class AbstractTripleStore implements TripleStore
 					tmp.renameTo(out);
 				}
 	
-				InputStream is = FileUtils.openZipStream(out);
+				InputStream is = HFileUtils.openZipStream(out);
 				rs = TsvRecordStream.open (is).filterComments().get();
 			}		
 	

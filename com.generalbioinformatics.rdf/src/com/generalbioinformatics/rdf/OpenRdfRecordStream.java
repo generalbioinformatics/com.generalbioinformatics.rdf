@@ -25,6 +25,7 @@ public class OpenRdfRecordStream extends AbstractRecordStream
 	private final TupleQueryResult tqs;
 	private final RecordMetaData rmd;
 	
+	/** wrap an OpenRdf TupleQueryResult */
 	public OpenRdfRecordStream(TupleQueryResult tqs) throws StreamException
 	{
 		this.tqs = tqs;

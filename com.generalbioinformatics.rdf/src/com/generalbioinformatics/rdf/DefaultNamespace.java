@@ -23,6 +23,7 @@ public class DefaultNamespace implements Namespace
 		return full;
 	}
 	
+	/** construct an instance with the given prefix and the given full namespace */
 	public DefaultNamespace (String prefix, String full)
 	{
 		this.prefix = prefix;

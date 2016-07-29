@@ -34,27 +34,28 @@ public class JenaRecordStream extends AbstractRecordStream
 	
 	private final RecordMetaData rmd;
 
+	/** simply wrap a jena resultset. The caller must take care that the parent QueryExecution is closed */
 	public JenaRecordStream(ResultSet rs) 
 	{
 		this (rs, null);
 	}
 	
 	/**
-	 * QueryExecution can optionally be passed - it will be closed when this recordstream is closed.
-	 * @param rs
-	 * @param qe
+	 * Wrap a jena resultset.
+	 * @param rs resultset to wrap
+	 * @param qe can optionally be passed - it will be closed when this recordstream is closed to prevent resource leaks.
 	 */
 	public JenaRecordStream(ResultSet rs, QueryExecution qe) 
 	{
 		this.rs = rs;
 		this.qe = qe;
 		
-		int i = 0;
+//		int i = 0;
 		for (String name : rs.getResultVars())
 		{
 			names.add(name);
 //			map.put(name, i);
-			i++;			
+//			i++;			
 		}
 		
 		if (rs.hasNext())

@@ -20,12 +20,15 @@ import nl.helixsoft.recordstream.StreamException;
 
 /**
  * A {@link TripleStore} implementation for SPARQL endpoints,
- * implemented using the Jena library
+ * implemented using the Jena Query Engine.
+ * <p>
+ * Can optionally use HTTP Basic authentication to connect to the sparql endpoint.
  */
 public class JenaSparqlEndpoint extends AbstractTripleStore
 {
 	private final String sparql;
 
+	/** Wrap a sparql endpoint using Jena Query Engine. */
 	public JenaSparqlEndpoint(String sparql) 
 	{
 		this.sparql = sparql;
@@ -33,6 +36,7 @@ public class JenaSparqlEndpoint extends AbstractTripleStore
 
 	private String user = null;
 	
+	/** set the username for HTTP Basic Authentication */
 	public void setUser (String user)
 	{
 		this.user = user;
@@ -40,6 +44,7 @@ public class JenaSparqlEndpoint extends AbstractTripleStore
 	
 	private String pass = null;
 	
+	/** set the password for HTTP Basic Authentication */
 	public void setPass (String pass)
 	{
 		this.pass = pass;
@@ -57,7 +62,7 @@ public class JenaSparqlEndpoint extends AbstractTripleStore
 			if (user != null && pass != null)
 				qe.setBasicAuthentication(user, pass.toCharArray());
 			ResultSet rs = qe.execSelect();
-			return new JenaRecordStream (rs);
+			return new JenaRecordStream (rs, qe);
 		}
 		catch (Exception e)
 		{
@@ -72,7 +77,7 @@ public class JenaSparqlEndpoint extends AbstractTripleStore
 		model.write(os);
 	}
 
-	// non-polymorphic method
+	/** Non-polymorphic, implementation-specifc method: get the result of a construct query as a Jena Model. */
 	public Model sparqlConstructAsModel (String query)
 	{
 		QueryEngineHTTP qe = new QueryEngineHTTP(sparql, query);

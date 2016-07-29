@@ -15,10 +15,14 @@ import nl.helixsoft.recordstream.RecordStream;
 import nl.helixsoft.recordstream.RecordStreamFormatter;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.AttributesTable;
-import nl.helixsoft.util.FileUtils;
+import nl.helixsoft.util.HFileUtils;
 
-public class Utils 
+/** Miscellaneous utilities related to RDF */
+public final class Utils 
 {
+	/** prevent instantiation */
+	private Utils() {}
+
 	/**
 	 * set of standard attributes for node or edge, that can be defined for any
 	 * iri
@@ -75,7 +79,7 @@ public class Utils
 			fos.println ("# " + qline);
 		}
 		fos.println ("# Date:" + new Date());
-		String computername = FileUtils.safeMachineName();
+		String computername = HFileUtils.safeMachineName();
 		String username = System.getProperty("user.name");
 		fos.println ("# " + username + "@" + computername);
 		// Important, because it helps to detect quiet time-out queries.

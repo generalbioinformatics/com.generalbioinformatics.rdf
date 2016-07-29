@@ -21,14 +21,14 @@ import nl.helixsoft.stats.DataFrame;
  * Using TripleStore has the following advantages compared to using e.g. a Jena Model directly
  * <ul>
  * <li>Ability to switch between implementations
- * <li>Allows accessing Virtuoso through using the direct JDBC/database access 
+ * <li>Allows accessing Virtuoso through direct JDBC/database access 
  * while allowing you to write code that is compatible with either Jena or Sesame openRdf
  * <li>Comes with a handy configuration dialog.
  * </ul>
  * <p>
- * A few known implementations:
+ * Current known implementations:
  * <ul>
- * <li>a local RDF file through Jena
+ * <li>local RDF file(s) through Jena. You can even use an empty Jena model and use SERVICE to query public SPARQL endpoints.
  * <li>Virtuoso using JDBC driver: this works directly on virtuoso, only way to get more than 10000 results on a default installation.
  * <li>Sparql endpoint through Jena: also works on virtuoso, but can have issues.
  * <li>OpenRdf / Sesame
@@ -38,7 +38,7 @@ public interface TripleStore
 {
 	/** 
 	 * Attempts to hide underlying implementation differences as much as possible.
-	 * URIs and anonymous IDs will be returned as RdfNode
+	 * URIs and anonymous IDs will be returned as {@link com.generalbioinformatics.rdf.stream.RdfNode}
 	 * Literals will be returned as basic classes such as Long, Integer, Boolean, String.
 	 * Language information on strings is not returned.
 	 * <p>

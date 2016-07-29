@@ -63,11 +63,13 @@ public class VirtuosoConnection extends AbstractTripleStore
 		return st.execute(sql);
 	}
 
+	/** constructor using the default host value (localhost). No connection is created until {@link init} is called. */
 	public VirtuosoConnection() throws ClassNotFoundException
 	{
 		this(null);
 	}
 	
+	/** constructor for the given virtuoso host. No connection is created until {@link init} is called. */
 	public VirtuosoConnection(String host) throws ClassNotFoundException
 	{
 		Class.forName("virtuoso.jdbc3.Driver");
