@@ -117,14 +117,14 @@ public class TestRdfStream extends TestCase
 		InputStream is;
 		TripleStream ts;
 		is = this.getClass().getResourceAsStream(ntName);
-		assertNotNull (is);
+		assertNotNull ("Could not load resource " + ntName, is);
 		ts = new NtStream (is);
 		Set<Statement> l = (Set<Statement>)ts.into (new HashSet<Statement>());
 	
 		System.out.println (l);
 		
 		is = this.getClass().getResourceAsStream(rdfName);
-		assertNotNull (is);
+		assertNotNull ("Could not load resource " + rdfName, is);
 		
 		ts = new RdfStream(is);
 		for (Statement st : ts)
