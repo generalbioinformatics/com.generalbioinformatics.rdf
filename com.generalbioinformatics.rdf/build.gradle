@@ -19,7 +19,8 @@ dependencies {
 		
     testCompile ("junit:junit:4.+",
     	"org.apache.jena:jena-arq:2.+",
-    	"openrdf-sesame:openrdf-sesame-all:2.6.+"
+    	"openrdf-sesame:openrdf-sesame-all:2.6.+",
+    	fileTree(dir: 'lib', include: '*.jar')
     )
 }
 
