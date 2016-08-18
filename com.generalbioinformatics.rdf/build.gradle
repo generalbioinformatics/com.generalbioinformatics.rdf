@@ -32,4 +32,4 @@ sourceSets.main.compileClasspath += configurations.provided
 sourceSets.main.compileClasspath += configurations.embed
 sourceSets.test.compileClasspath += configurations.provided
 sourceSets.test.compileClasspath += configurations.embed
-
+sourceSets.test.resources.srcDirs = ['test']
