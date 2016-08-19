@@ -53,8 +53,10 @@ public final class Statement
 
 	public void setObject(RdfNode n)
 	{
-		this.oUri = n.getUri();
+		assert (!n.isLiteral());
+		this.fLiteral = n.isLiteral();
 		this.oIsAnon = n.isAnon();
+		this.oUri = n.getUri();
 	}
 
 	public void setPredicate(RdfNode n)
@@ -105,6 +107,11 @@ public final class Statement
 		return sUri;
 	}
 
+	public RdfNode getSubject()
+	{
+		return new RdfNode(this.sUri, this.sIsAnon, false);
+	}
+	
 	/**
 	 * get the predicate part as bracketed &lt;URI&gt;, or without brackets in 
 	 * case this is an anonymous identifier.
@@ -309,5 +316,9 @@ public final class Statement
 			(oIsAnon == st.oIsAnon) &&
 			(fLiteral == st.fLiteral);
 	}
-	
+
+	public String getLiteralLanguage() 
+	{
+		return litLang;
+	}	
 }

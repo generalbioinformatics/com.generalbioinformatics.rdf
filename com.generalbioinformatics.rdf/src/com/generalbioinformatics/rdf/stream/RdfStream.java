@@ -140,6 +140,50 @@ public class RdfStream extends AbstractTripleStream
 		String currentLang;
 	}
 
+	private String realId;
+	
+	private void reifyTriple(String realId, Statement result)
+	{
+		String realUri = makeUriAbsolute("#" + realId);
+		
+		Statement st = new Statement();
+		st.setSubjectUri(realUri);
+		st.setPredicateUri(RDF_NS + "type");
+		st.setObjectUri(RDF_NS + "Statement");
+		queue.add(st);
+		
+		st = new Statement();
+		st.setSubjectUri(realUri);
+		st.setPredicateUri(RDF_NS + "subject");
+		st.setObject(result.getSubject());
+		queue.add(st);
+
+		st = new Statement();
+		st.setSubjectUri(realUri);
+		st.setPredicateUri(RDF_NS + "predicate");
+		st.setObjectUri(result.getPredicateUri());
+		queue.add(st);
+
+		st = new Statement();
+		
+		st.setSubjectUri(realUri);
+		st.setPredicateUri(RDF_NS + "object");
+		
+		if (result.isLiteral())
+		{
+			st.setLiteral(result.getLiteral());
+			st.setLiteralLanguage(result.getLiteralLanguage());
+		}
+		else
+		{
+			if (st.isObjectAnon()) st.setObjectAnon(result.getObjectUri());
+			else st.setObjectUri(result.getObjectUri());
+		}
+		queue.add(st); 
+
+		realId = null;
+	}
+	
 	private void fillQueue() throws ParseException {
 		Statement result = new Statement();
 		if (!currentNode.isEmpty()) {
@@ -227,11 +271,19 @@ public class RdfStream extends AbstractTripleStream
 							result.setPredicateUri(uri);
 							rdfSequence = null;
 						}
+						
+						// is there an id on this property?
+						realId = parser.getAttributeValue (RDF_NS, "ID");
+
 						parseLiteralPropertyAttributes(result);
-						RdfNode node = parseCurrentObject();				
+						RdfNode node = parseCurrentObject();		
 						if (node != null) {
 							result.setObject(node);
 							queue.add(result);
+							
+							// if there is an id assigned to this property, re-ify the whole triple.
+							if (realId != null) { reifyTriple(realId, result); }
+
 							parseState = ParseState.NODE;
 						}
 						else {
@@ -285,6 +337,7 @@ public class RdfStream extends AbstractTripleStream
 						if (currentLang != null)
 							result.setLiteralLanguage(currentLang);
 						queue.add(result);
+						if (realId != null) { reifyTriple(realId, result); }
 					}
 					// ignore
 					break;
