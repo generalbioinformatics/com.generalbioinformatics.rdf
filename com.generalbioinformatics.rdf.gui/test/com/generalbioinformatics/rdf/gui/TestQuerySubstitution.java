@@ -20,7 +20,7 @@ public class TestQuerySubstitution
 	public void setup()
 	{
 		p = new MarrsProject();
-		mq = new MarrsQuery("test1", "select ?s ?p ?o FROM ${GRAPH} where { ?s ?p ?o . FILTER ?s IN (${ID|uri-list}) }", QueryType.QUERY_BACKBONE);
+		mq = new MarrsQuery("test1", "select ?s ?p ?o FROM <${GRAPH}> where { ?s ?p ?o . FILTER ?s IN (${ID|uri-list}) }", QueryType.QUERY_BACKBONE);
 		p.addQuery(mq);
 	}
 	
@@ -49,11 +49,11 @@ public class TestQuerySubstitution
 			// OK, expected exception
 		}
 		
-		p.getParameterModel().put("GRAPH", "<http://www.helixsoft.nl>");	
-		p.getParameterModel().put("ID", "<http://identifiers.org/uniprot/P1234> <http://identifiers.org/ncbigene/3643>");	
+		p.getParameterModel().put("GRAPH", "http://www.helixsoft.nl");	
+		p.getParameterModel().put("ID", "<http://identifiers.org/uniprot/P1234>, <http://identifiers.org/ncbigene/3643>");	
 		
 		String q = p.getSubstitutedQuery(mq);
-		Assert.assertEquals ("select ?s ?p ?o FROM <http://www.helixsoft.nl> where { ?s ?p ?o . FILTER ?s IN (<http://identifiers.org/uniprot/P1234> <http://identifiers.org/ncbigene/3643>) }", q);
+		Assert.assertEquals ("select ?s ?p ?o FROM <http://www.helixsoft.nl> where { ?s ?p ?o . FILTER ?s IN (<http://identifiers.org/uniprot/P1234>, <http://identifiers.org/ncbigene/3643>) }", q);
 	}
 
 	@Test
