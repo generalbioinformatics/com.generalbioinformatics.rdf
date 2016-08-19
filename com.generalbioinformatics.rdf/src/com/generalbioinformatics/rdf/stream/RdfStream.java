@@ -39,7 +39,7 @@ public class RdfStream extends AbstractTripleStream
 	private int sequentialId = 1;
 
 	enum ParseState {
-		START, RDF_OPEN, NODE, PROPERTY, 
+		START, RDF_OPEN, NODE, PROPERTY, COLLECTION_NODE, COLLECTION_CHILD, 
 	};
 
 	public RdfStream(InputStream parent) throws XMLStreamException,
@@ -185,6 +185,38 @@ public class RdfStream extends AbstractTripleStream
 						parseTypeTriple(uri);
 						parseLiteralPropertyAttributes(new Statement());
 						parseState = ParseState.PROPERTY;
+					}
+					else if (parseState == ParseState.COLLECTION_CHILD)
+					{
+						// do nothing, just let the stack unwind...
+					}
+					else if (parseState == ParseState.COLLECTION_NODE)
+					{
+						// emit triple which is either
+						
+						// <collectionId> <property> _:anonId 
+						// _:previousId rdf:rest _:anonId
+												
+						String id = generateAnon();
+						result.setObjectAnon(id);
+						if (result.getPredicateUri() == null) {
+							result.setPredicateUri(RDF_NS + "rest");
+						}
+						queue.add(result);
+						
+						RdfNode node = parseCurrentNode();
+						result = new Statement();
+						result.setSubjectAnon(id);
+						result.setPredicateUri(RDF_NS + "first");
+						result.setObject(node);
+						
+						queue.add(result);		
+						
+						// we'll hook on the chain in the next round: 
+						currentNode.push(RdfNode.createAnon(id));
+						
+						parseState = ParseState.COLLECTION_CHILD;
+						
 					} else if (parseState == ParseState.PROPERTY) {
 						if (uri.equals(RDF_NS + "li"))
 						{
@@ -229,8 +261,16 @@ public class RdfStream extends AbstractTripleStream
 								result.setLiteralType("http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral");
 								queue.add(result);
 								parseState = ParseState.NODE;
-							} else {
+							}
+							else if ("Collection".equals(parseType))
+							{								
+								parseState = ParseState.COLLECTION_NODE;
+							}
+							else if (parseType == null)
+							{
 								parseState = ParseState.NODE;
+							} else {
+								throw new ParseException("Unrecognized parse type: " + parseType);
 							}
 						}
 					}
@@ -256,6 +296,14 @@ public class RdfStream extends AbstractTripleStream
 						if (!currentNode.isEmpty())
 							result.setSubject(currentNode.lastElement());
 
+					}
+					else if (parseState == ParseState.COLLECTION_NODE) {
+						System.out.println ("End of collection");
+						if (result.getPredicateUri() == null) {
+							result.setPredicateUri(RDF_NS + "rest");
+						}
+						result.setObjectUri(RDF_NS + "nil");
+						queue.add(result);
 					}
 					parseState = stateStack.pop().state;					
 					break;
