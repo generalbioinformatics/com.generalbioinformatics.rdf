@@ -6,8 +6,9 @@ package com.generalbioinformatics.rdf.stream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import nl.helixsoft.util.ParseBuffer;
+import nl.helixsoft.util.PeekReader;
 
 /**
  * My own implementation of a NT file parser, specifically
@@ -41,7 +42,7 @@ public class NtStream extends AbstractTripleStream
 		}
 	}
 
-	private final ParseBuffer is;
+	private final PeekReader is;
 	
 	private int start;
 	private int end;
@@ -52,7 +53,7 @@ public class NtStream extends AbstractTripleStream
 	{
 		// Wrapping the InputStream in a BufferedInputStream can give a speed boost.
 		// ParseBuffer is like BufferedInputStream, but gives another speed boost because of zero-copy mechanic.
-		this.is = new ParseBuffer(is);
+		this.is = new PeekReader(is);
 		next = this.is.peek();
 	}
 	
