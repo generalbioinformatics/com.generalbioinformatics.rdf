@@ -36,11 +36,12 @@ import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.HFileUtils;
 import nl.helixsoft.util.StringUtils;
-import virtuoso.jdbc3.VirtuosoConnectionPoolDataSource;
 import virtuoso.jdbc3.VirtuosoException;
 
 /**
  * This class is a wrapper for a JDBC connection to virtuoso.
+ * You can configure the connection with {@link #setUser}, {@link #setPass}, {@link #setPort} and {@link #setHost},
+ * or alternatively by setting a DataSource with {@link #setDataSource}, which will alos allow you to do things like connection pooling etc. 
  * <p>
  * In addition to executing sparql queries, this class has
  * some helpful utility functions for storing namespace prefixes, 
