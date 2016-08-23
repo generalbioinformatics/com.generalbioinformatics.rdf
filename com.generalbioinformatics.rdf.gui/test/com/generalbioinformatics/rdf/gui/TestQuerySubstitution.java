@@ -59,7 +59,7 @@ public class TestQuerySubstitution
 	@Test
 	public void testBadUriList() throws MarrsException 
 	{
-		p.getParameterModel().put("GRAPH", "<http://www.helixsoft.nl>");	
+		p.getParameterModel().put("GRAPH", "http://www.helixsoft.nl");	
 		
 		try
 		{

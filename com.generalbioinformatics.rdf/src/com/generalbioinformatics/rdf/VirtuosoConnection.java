@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.sql.DataSource;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ import nl.helixsoft.recordstream.Stream;
 import nl.helixsoft.recordstream.StreamException;
 import nl.helixsoft.util.HFileUtils;
 import nl.helixsoft.util.StringUtils;
+import virtuoso.jdbc3.VirtuosoConnectionPoolDataSource;
 import virtuoso.jdbc3.VirtuosoException;
 
 /**
@@ -79,38 +82,47 @@ public class VirtuosoConnection extends AbstractTripleStore
 	}
 	
 	// JDBC connection
-	private Connection con = null;
+	private Connection _con = null;
 	
 	private Connection getConnection() throws SQLException, IOException
 	{
-		if (con == null)
-		{			
-			// read Properties
-			Properties props = new Properties();
+		if (ds == null)
+		{		
+			if (_con == null)
+			{			
+				// read Properties
+				Properties props = new Properties();
+				
+				InputStream stream = VirtuosoConnection.class.getResourceAsStream("connection.properties");
+				if (stream != null) props.load(stream);
+	
+				if (user == null) user = props.getProperty("username", "dba");
+				if (pass == null) pass = props.getProperty("password", "dba");
+				if (host == null) host = props.getProperty("host", "localhost");
+				if (port == null) port = props.getProperty("port", "1111");
 			
-			InputStream stream = VirtuosoConnection.class.getResourceAsStream("connection.properties");
-			if (stream != null) props.load(stream);
-
-			if (user == null) user = props.getProperty("username", "dba");
-			if (pass == null) pass = props.getProperty("password", "dba");
-			if (host == null) host = props.getProperty("host", "localhost");
-			if (port == null) port = props.getProperty("port", "1111");
-		
-			String url = "jdbc:virtuoso://" + host + ":" + port + "/charset=UTF-8";
-
-			try
-			{
-				con = DriverManager.getConnection(url, user, pass);
+				String url = "jdbc:virtuoso://" + host + ":" + port + "/charset=UTF-8";
+	
+				try
+				{
+					_con = DriverManager.getConnection(url, user, pass);
+				}
+				catch (VirtuosoException ex)
+				{
+					rethrowWithTips(ex);
+				}
+				
+				if (tempDir == null) tempDir = new File (props.getProperty("vload.directory", "/local/tmp/virtuoso-tmp"));			
+	
 			}
-			catch (VirtuosoException ex)
-			{
-				rethrowWithTips(ex);
-			}
-			
-			if (tempDir == null) tempDir = new File (props.getProperty("vload.directory", "/local/tmp/virtuoso-tmp"));			
-
+			return _con;
 		}
-		return con;
+		else
+		{
+			assert _con == null : "Programming error: Connection and DataSource both in use at the same time";
+			assert user == null && pass == null && host == null && port == null : "Set either DataSource or user/pass/host/port, but not both";
+			return ds.getConnection();
+		}
 	}
 	
 	// tempdir used by vload, can be configured in connection.properties
@@ -120,6 +132,15 @@ public class VirtuosoConnection extends AbstractTripleStore
 	private String host;
 	private String port;
 	private String pass;
+	private DataSource ds;
+
+	/** set a DataSource in a pooled Connection environment. Use either this or user/pass/host/port, but not both */
+	public void setDataSource(DataSource value)
+	{
+		assert _con == null : "Can't set DataSource when connection is already initialised";
+		assert user == null && pass == null && host == null && port == null : "Set either DataSource or user/pass/host/port, but not both";
+		ds = value;
+	}
 	
 	/** set the host of the virtuoso server, for example 'localhost' (default)*/
 	public void setHost (String val) { host = val; }
@@ -589,44 +610,12 @@ public class VirtuosoConnection extends AbstractTripleStore
 		// DB.DBA.RDF_TRIPLES_TO_TTL
 	}
 	
-	public String calculateHash(String graph) throws SQLException, NoSuchAlgorithmException
-	{
-		// TODO: sanitize graph
-		
-		MessageDigest digest = MessageDigest.getInstance("SHA-512"); // takes 50 sec on Fly data
-//		MessageDigest digest = MessageDigest.getInstance("MD5"); // takes 46 sec on Fly data
-		
-		// cb66cc5f1feb5169542af48342936ad2962a8ae14840f1e029028636004f779346c19ecd0917ea2f53c6ec94f4ab10c5bffc272888ae33b73797bdee9cb7193a
-		
-		Statement st = con.createStatement();
-		try
-		{
-			
-			ResultSet rs = executeQuery(st, "SPARQL SELECT ?s ?p ?o FROM <" + graph + "> WHERE { ?s ?p ?o . }");
-			while (rs.next())
-			{
-				digest.update(rs.getString(1).getBytes());
-				digest.update(rs.getString(2).getBytes());
-				digest.update(rs.getString(3).getBytes());
-			}
-			
-		}
-		catch (VirtuosoException ex)
-		{
-			rethrowWithTips(ex);
-		}
-		String hexString = new String(Hex.encodeHex(digest.digest()));
-		return hexString;
-		
-	}
-
 	private String prefixes = "";
 	
 	public void setPrefixes(String prefixes)
 	{
 		this.prefixes = prefixes;
 	}
-	
 	
 //	public ResultSet execSelect(String query) 
 //	{
@@ -661,14 +650,15 @@ public class VirtuosoConnection extends AbstractTripleStore
 
 	File iniFile = null;
 	
-	public File getIni() throws SQLException 
+	/** get the virtuoso ini file location */
+	public File getIni() throws SQLException, IOException 
 	{
 		// SELECT server_root (), virtuoso_ini_path ();
 		// to get location of virtuoso.ini
 
 		if (iniFile == null)
 		{
-			Statement st = con.createStatement();
+			Statement st = getConnection().createStatement();
 			ResultSet rs = executeQuery(st, "SELECT server_root (), virtuoso_ini_path ();");
 			rs.next();
 			iniFile = new File (rs.getString(0), rs.getString(1));
@@ -763,13 +753,13 @@ public class VirtuosoConnection extends AbstractTripleStore
 		}
 	}
 	
-	public void setNamespacePrefix (String prefix, String uri) throws SQLException
+	public void setNamespacePrefix (String prefix, String uri) throws SQLException, IOException
 	{
 		String error;
 		if ((error = StringUtils.checkForIllegalCharacter(prefix, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")) != null) throw new IllegalArgumentException ("Prefix '" + prefix + "' " + error);
 		if ((error = StringUtils.checkForIllegalCharacter(uri, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-:/%~#.")) != null) throw new IllegalArgumentException ("Url '" + uri + "' " + error);
 		
-		Statement st = con.createStatement();
+		Statement st = getConnection().createStatement();
 		
 		String sql = 
 		"DB.DBA.XML_SET_NS_DECL ('" + prefix + "', '" + uri + "', 2)";
