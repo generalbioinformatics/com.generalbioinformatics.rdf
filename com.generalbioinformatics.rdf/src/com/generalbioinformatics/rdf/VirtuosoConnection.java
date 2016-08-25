@@ -9,8 +9,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -22,7 +20,6 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,19 +178,29 @@ public class VirtuosoConnection extends AbstractTripleStore
 	 */
 	public RecordStream _sparqlSelectDirect(String query) throws StreamException
 	{
+		Connection con = null;
+		Statement st = null;
+		RecordStream rs = null;
 		try
 		{
-			Statement st = getConnection().createStatement();
+			con = getConnection(); 
+			st = con.createStatement();
 			ResultSet result = executeQuery(st, "SPARQL " + prefixes + " " + query);
-			RecordStream rs = new VirtuosoRecordStream(result);
+			rs = new VirtuosoRecordStream(result, st, isManagedConnection() ? con : null);
 			return rs;
 		}
-		catch (SQLException ex)
+		catch (Exception ex)
 		{
+			// if we failed to create the stream, clean up and rethrow
+			try
+			{
+				if (rs != null) rs.close();
+				if (st != null && !st.isClosed()) st.close();
+				if (isManagedConnection() && !con.isClosed()) con.close();
+			} catch (SQLException inner) { /* ignore */ }
+			
 			throw new StreamException(ex);
-		} catch (IOException ex) {
-			throw new StreamException(ex);
-		}
+		}		
 	}
 	
 	public Stream<com.generalbioinformatics.rdf.stream.Statement> sparqlSelectAsStatementStream(String query) throws StreamException
@@ -216,14 +223,22 @@ public class VirtuosoConnection extends AbstractTripleStore
 	@Override
 	public void sparqlConstruct(String query, OutputStream os) throws StreamException
 	{
+		Connection con = null;
+		Statement st = null;
+		RecordStream rs = null;
 		try
 		{
-			Statement st = getConnection().createStatement();
+			con = getConnection(); 
+			st = con.createStatement();
 			
 			//TODO: evaluate
 			logEnable(st, true, false); 
 			
-			RecordStream rs = new ResultSetRecordStream(executeQuery(st, "SPARQL " + prefixes + " " + query));
+			rs = new ResultSetRecordStream(
+					executeQuery(st, "SPARQL " + prefixes + " " + query),
+					st,
+					isManagedConnection() ? con : null
+			);
 			
 			NtWriter nt = new NtWriter (os);
 			
@@ -235,13 +250,21 @@ public class VirtuosoConnection extends AbstractTripleStore
 				String o = "" + r.get("O");
 				nt.writeStatement(s, p, o);
 			}
-			st.close();
 		}
 		catch (SQLException ex)
 		{
 			throw new StreamException(ex);
 		} catch (IOException ex) {
 			throw new StreamException(ex);
+		}
+		finally
+		{
+			try
+			{
+				if (rs != null) rs.close();
+				if (st != null && !st.isClosed()) st.close();
+				if (isManagedConnection() && !con.isClosed()) con.close();
+			} catch (SQLException  ex) { /* ignore */ }
 		}
 		
 	}
@@ -330,7 +353,8 @@ public class VirtuosoConnection extends AbstractTripleStore
 	public String getVirtuosoVersionString() throws SQLException, IOException
 	{
 		String result = "Could not obtain version";
-		Statement st = getConnection().createStatement();
+		Connection con = getConnection(); 
+		Statement st = con.createStatement();
 		try
 		{
 			//TODO: better, but not working in JDBC - why?
@@ -355,8 +379,15 @@ public class VirtuosoConnection extends AbstractTripleStore
 		finally
 		{
 			st.close();
+			if (isManagedConnection()) con.close();
+			
 		}
 		return result;
+	}
+
+	/** Check if this is a connection managed by a connection pool (meaning that we have to close it */
+	private boolean isManagedConnection() {
+		return ds != null;
 	}
 
 	
