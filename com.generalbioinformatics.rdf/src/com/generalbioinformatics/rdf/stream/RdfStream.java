@@ -53,6 +53,7 @@ public class RdfStream extends AbstractTripleStream
 		factory.setProperty(XMLInputFactory.SUPPORT_DTD, false); // avoid
 																	// downloading
 																	// DTD
+		factory.setProperty(XMLInputFactory.IS_COALESCING, true);
 		parser = factory.createXMLStreamReader(parent);
 		xmlBase = aXmlBase;
 		
